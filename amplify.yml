@@ -17,11 +17,11 @@ applications:
             - corepack prepare pnpm@12.18.0 --activate
             - pnpm --version
             # Amplify docs require node-linker=hoisted for pnpm workspaces; passed on the command line.
-            - cd "$CODEBUILD_SRC_DIR" && pwd && pnpm install --frozen-lockfile --config.node-linker=hoisted --filter "web..." --filter "db..."
+            - cd "$(git rev-parse --show-toplevel)" && pwd && pnpm install --frozen-lockfile --config.node-linker=hoisted --filter "web..." --filter "db..."
         build:
           commands:
             # SSR runtime only sees variables written to .env.production at build time.
-            - cd "$CODEBUILD_SRC_DIR/web" && pwd && env | grep -E '^(LIVEKIT_|DATABASE_URL|AGENT_NAME|ALLOW_TOKEN_ROUTE|DEMO_|LK_|NEXT_PUBLIC_)' >> .env.production && pnpm build
+            - cd "$(git rev-parse --show-toplevel)/web" && pwd && env | grep -E '^(LIVEKIT_|DATABASE_URL|AGENT_NAME|ALLOW_TOKEN_ROUTE|DEMO_|LK_|NEXT_PUBLIC_)' >> .env.production && pnpm build
       artifacts:
         baseDirectory: web/.next
         files:
