@@ -203,6 +203,15 @@ importers:
       '@modelcontextprotocol/client':
         specifier: ^2.3.1
         version: 2.4.0
+      '@opentelemetry/api':
+        specifier: ^1.9.0
+        version: 1.10.0
+      '@opentelemetry/exporter-trace-otlp-proto':
+        specifier: ^0.220.0
+        version: 0.220.0(@opentelemetry/api@1.10.0)
+      '@opentelemetry/sdk-trace-node':
+        specifier: ^2.8.0
+        version: 2.12.0(@opentelemetry/api@1.10.0)
       braintrust:
         specifier: ^3.43.0
         version: 3.43.0(@types/react@19.3.0)(supports-color@7.2.0)(zod@4.6.7)
@@ -237,12 +246,12 @@ importers:
 
   eval:
     dependencies:
+      '@livekit/agents':
+        specifier: 1.9.5
+        version: 1.9.5(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7)
       agent:
         specifier: workspace:*
         version: link:../agent
-      autoevals:
-        specifier: ^0.4.1
-        version: 0.4.1(ws@8.22.1)(zod@4.6.7)
       braintrust:
         specifier: ^3.43.0
         version: 3.43.0(@types/react@19.3.0)(supports-color@7.2.0)(zod@4.6.7)
@@ -2011,20 +2020,12 @@ packages:
     resolution: {integrity: sha512-kNOjDqAh7px0XWNI+4QbzoiR/nTkHAWNud2uvnJquD1/x5a7EQZMJT0AczqK0Qn67oY/TTQ1LbUKajZpp3I9tQ==}
     engines: {node: '>=8.0.0'}
 
-  autoevals@0.4.1:
-    resolution: {integrity: sha512-qt7x18zjbiod7YOvW7SrnYFbPjy/D9BRZLN47xP1yYdMdRhtGzpswGhtX0Y0Xo90q9HgA7ZDXM2BOCCrG+HV0w==}
-    peerDependencies:
-      zod: ^3.25.0 || ^4.0.0
-
   balanced-match@4.0.4:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
     engines: {node: 18 || 20 || >=22}
 
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
-
-  binary-search@1.3.6:
-    resolution: {integrity: sha512-nbE1WxOTTrUWIfsfZ4aHGYu5DOuNkbxGokjV6Z2kxfJK3uaAb8zNK1muzOeipoLHZjInT4Br88BHpzevc681xA==}
 
   body-parser@2.4.0:
     resolution: {integrity: sha512-Ifk1KcLrxaGt1occQagQNFNNOqRt1LFuehEnHHzB8Z6cRgIxRU1TBaiIsUiCdA+gy5PL7Y1IX31DNKkRmxtXjQ==}
@@ -2077,9 +2078,6 @@ packages:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
 
-  cheminfo-types@1.16.0:
-    resolution: {integrity: sha512-j0MiXFnLRVEZg3vUr7SXm6F3HuDNVE5arfQyDMiy1w2fAcuOs3QRgVsw7aOIACvr0aqbvn85cucwt+yOu64IiQ==}
-
   cjs-module-lexer@2.3.0:
     resolution: {integrity: sha512-lmNyBzi6iYiqyrExTctfmjd8tInx+dHu9PBomTfH5RXS53c27JMFJgzNv5TyAnm3PgGf+MLy0+Ws41/HlVxdKQ==}
 
@@ -2115,15 +2113,6 @@ packages:
   commander@12.1.0:
     resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
     engines: {node: '>=18'}
-
-  compute-cosine-similarity@1.1.0:
-    resolution: {integrity: sha512-FXhNx0ILLjGi9Z9+lglLzM12+0uoTnYkHm7GiadXDAr0HGVLm25OivUS1B/LPkbzzvlcXz/1EvWg9ZYyJSdhTw==}
-
-  compute-dot@1.1.0:
-    resolution: {integrity: sha512-L5Ocet4DdMrXboss13K59OK23GXjiSia7+7Ukc7q4Bl+RVpIXK2W9IHMbWDZkh+JUEvJAwOKRaJDiFUa1LTnJg==}
-
-  compute-l2norm@1.1.0:
-    resolution: {integrity: sha512-6EHh1Elj90eU28SXi+h2PLnTQvZmkkHWySpoFz+WOlVNLz3DQoC4ISUHSV9n5jMxPHtKGJ01F4uu2PsXBB8sSg==}
 
   content-disposition@2.0.1:
     resolution: {integrity: sha512-e+H0ZXHSWYrENhQzw1LPuP4oF5MzVKmDU6d3hxlvaPEYLLg62MxtQNPRx4SYSuYJSBUgnQIG4HIN2tEtNv7Dog==}
@@ -2474,9 +2463,6 @@ packages:
       picomatch:
         optional: true
 
-  fft.js@4.0.4:
-    resolution: {integrity: sha512-f9c00hphOgeQTlDyavwTtu6RiK8AIFjD6+jvXkNkpeQ7rirK3uFWVpalkoS4LAwbdX7mfZ8aoBfFVQX1Re/8aw==}
-
   file-entry-cache@8.0.0:
     resolution: {integrity: sha512-XXTUwCvisa5oacNGRP9SfNtYBNAMi+RPwBFmblZEF7N7swHYQS6/Zfk7SRwx4D5j3CH211YNRco1DEMNVfZCnQ==}
     engines: {node: '>=16.0.0'}
@@ -2612,9 +2598,6 @@ packages:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
     engines: {node: '>= 0.10'}
 
-  is-any-array@3.0.0:
-    resolution: {integrity: sha512-o4h+tylWykC4BD1vaejp6gDxoM13bwW8FGuNs4yIKpj8xbBJcRxJx8vZpq0dCr7ZDEfeKjmsi/euolKhX6f/ww==}
-
   is-extglob@2.1.1:
     resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}
     engines: {node: '>=0.10.0'}
@@ -2646,10 +2629,6 @@ packages:
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
     engines: {node: '>=10'}
-
-  js-levenshtein@1.1.6:
-    resolution: {integrity: sha512-X2BB11YZtrRqY4EnQcLX5Rh373zbK4alC1FW7D7MBhL2gtcC17cTnr6DmfHZeS0s2rTHjUTMMHfG7gO8SSdw+g==}
-    engines: {node: '>=0.10.0'}
 
   js-yaml@4.3.2:
     resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
@@ -2758,9 +2737,6 @@ packages:
     resolution: {integrity: sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==}
     engines: {node: '>= 12.0.0'}
 
-  linear-sum-assignment@1.0.9:
-    resolution: {integrity: sha512-1T2Ek3sxpt2mBHeBFMRJEikiIK/yIOwf+mrxv/DkAU/5ddnCMndZL//hFH7QuHa1tbaQADzsf9t7rkGZKqoFfQ==}
-
   livekit-client@2.23.0:
     resolution: {integrity: sha512-j9Kg86nJjBjNFUD+ukp2jwMCGa0k+YD5gU//RzAM+ZY3pbG631QCte7fQjwqWMmtBzhDJL9nKYuOLMv/9IbAxg==}
     peerDependencies:
@@ -2840,24 +2816,6 @@ packages:
   minipass@7.1.3:
     resolution: {integrity: sha512-tEBHqDnIoM/1rXME1zgka9g6Q2lcoCkxHLuc7ODJ5BxbP5d4c2Z5cGgtXAku59200Cx7diuHTOYfSBD8n6mm8A==}
     engines: {node: '>=16 || 14 >=14.17'}
-
-  ml-array-max@2.0.0:
-    resolution: {integrity: sha512-QQZ4kENwpWmyNb98UXRDFXrmtIXuXtt1+bSbda/2KA85+F+rrJP8hZk6QOkCQXM2Th9mUDYdq/PNByPdT9ID4A==}
-
-  ml-array-min@2.0.0:
-    resolution: {integrity: sha512-GRj6Ky6sW9vGL6yIjgsHmXZ9YgrdmcQ8nCxPqEGeKc6dkfYg1XDYxGFxADUjNuZyoCd5PUscWAS4N+cFaX6hFg==}
-
-  ml-array-rescale@2.0.0:
-    resolution: {integrity: sha512-2GGtKfSno94/kIloWGvpp/U5Q5vLvLrza+SAaGsLeo6Xj4mEbA6Gqx+oTfZFkxnd1grT2X007HfJNs3T5BsiVg==}
-
-  ml-matrix@6.15.1:
-    resolution: {integrity: sha512-DUVxsB+hsXhha9FTp6kQiy6UopxW9F7IXsbWhYVTHRfKdb0UimLYUDYqLQ1WwGPERnp8T5Usbwb47xxkAzSfOg==}
-
-  ml-spectra-processing@14.35.1:
-    resolution: {integrity: sha512-yxTB9YpgNmo53U+c2tG1/uKKUl+CNO3hlp+3utuBlhAqDw3AD9c78gI+1rYz+sykOXV76QtAXuAhFZFZjMvgDw==}
-
-  ml-xsadd@3.0.1:
-    resolution: {integrity: sha512-Fz2q6dwgzGM8wYKGArTUTZDGa4lQFA2Vi6orjGeTVRy22ZnQFKlJuwS9n8NRviqz1KHAHAzdKJwbnYhdo38uYg==}
 
   module-details-from-path@1.0.4:
     resolution: {integrity: sha512-EGWKgxALGMgzvxYF1UyGTy0HXX/2vHLkw6+NvDKW2jypWbHpjQuj4UMcqQWXHERJhVGKikolT06G3bcKe4fi7w==}
@@ -3397,12 +3355,6 @@ packages:
     resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
     hasBin: true
 
-  validate.io-array@1.0.6:
-    resolution: {integrity: sha512-DeOy7CnPEziggrOO5CZhVKJw6S3Yi7e9e65R1Nl/RTN1vTQKnzjfvks0/8kQ40FP/dsjRAOd4hxmJ7uLa6vxkg==}
-
-  validate.io-function@1.0.2:
-    resolution: {integrity: sha512-LlFybRJEriSuBnUhQyG5bwglhh50EpTL2ul23MPIuR1odjO7XaMLFV8vHGwp7AZciFxtYOeiSCT5st+XSPONiQ==}
-
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
@@ -3539,11 +3491,6 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
-
-  zod-to-json-schema@3.25.0:
-    resolution: {integrity: sha512-HvWtU2UG41LALjajJrML6uQejQhNJx+JBO9IflpSja4R03iNWfKXrj6W2h7ljuLyc1nKS+9yDyL/9tD1U/yBnQ==}
-    peerDependencies:
-      zod: ^3.25 || ^4
 
   zod-to-json-schema@3.25.2:
     resolution: {integrity: sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA==}
@@ -4845,28 +4792,9 @@ snapshots:
 
   atomic-sleep@1.0.0: {}
 
-  autoevals@0.4.1(ws@8.22.1)(zod@4.6.7):
-    dependencies:
-      ajv: 8.20.0
-      compute-cosine-similarity: 1.1.0
-      js-levenshtein: 1.1.6
-      js-yaml: 4.3.2
-      linear-sum-assignment: 1.0.9
-      mustache: 4.2.0
-      openai: 6.49.0(ws@8.22.1)(zod@4.6.7)
-      zod: 4.6.7
-      zod-to-json-schema: 3.25.0(zod@4.6.7)
-    transitivePeerDependencies:
-      - '@aws-sdk/credential-provider-node'
-      - '@smithy/hash-node'
-      - '@smithy/signature-v4'
-      - ws
-
   balanced-match@4.0.4: {}
 
   base64-js@1.5.1: {}
-
-  binary-search@1.3.6: {}
 
   body-parser@2.4.0(supports-color@7.2.0):
     dependencies:
@@ -4960,8 +4888,6 @@ snapshots:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
 
-  cheminfo-types@1.16.0: {}
-
   cjs-module-lexer@2.3.0: {}
 
   cli-progress@3.12.0:
@@ -4991,23 +4917,6 @@ snapshots:
       delayed-stream: 1.0.0
 
   commander@12.1.0: {}
-
-  compute-cosine-similarity@1.1.0:
-    dependencies:
-      compute-dot: 1.1.0
-      compute-l2norm: 1.1.0
-      validate.io-array: 1.0.6
-      validate.io-function: 1.0.2
-
-  compute-dot@1.1.0:
-    dependencies:
-      validate.io-array: 1.0.6
-      validate.io-function: 1.0.2
-
-  compute-l2norm@1.1.0:
-    dependencies:
-      validate.io-array: 1.0.6
-      validate.io-function: 1.0.2
 
   content-disposition@2.0.1: {}
 
@@ -5363,8 +5272,6 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.7
 
-  fft.js@4.0.4: {}
-
   file-entry-cache@8.0.0:
     dependencies:
       flat-cache: 4.0.1
@@ -5503,8 +5410,6 @@ snapshots:
 
   ipaddr.js@1.9.1: {}
 
-  is-any-array@3.0.0: {}
-
   is-extglob@2.1.1: {}
 
   is-fullwidth-code-point@3.0.0: {}
@@ -5524,8 +5429,6 @@ snapshots:
   jose@6.2.15: {}
 
   joycon@3.1.1: {}
-
-  js-levenshtein@1.1.6: {}
 
   js-yaml@4.3.2:
     dependencies:
@@ -5603,12 +5506,6 @@ snapshots:
       lightningcss-win32-arm64-msvc: 1.33.0
       lightningcss-win32-x64-msvc: 1.33.0
 
-  linear-sum-assignment@1.0.9:
-    dependencies:
-      cheminfo-types: 1.16.0
-      ml-matrix: 6.15.1
-      ml-spectra-processing: 14.35.1
-
   livekit-client@2.23.0(@types/dom-mediacapture-record@1.0.22):
     dependencies:
       '@livekit/mutex': 1.1.1
@@ -5679,36 +5576,6 @@ snapshots:
   minimist@1.2.8: {}
 
   minipass@7.1.3: {}
-
-  ml-array-max@2.0.0:
-    dependencies:
-      is-any-array: 3.0.0
-
-  ml-array-min@2.0.0:
-    dependencies:
-      is-any-array: 3.0.0
-
-  ml-array-rescale@2.0.0:
-    dependencies:
-      is-any-array: 3.0.0
-      ml-array-max: 2.0.0
-      ml-array-min: 2.0.0
-
-  ml-matrix@6.15.1:
-    dependencies:
-      is-any-array: 3.0.0
-      ml-array-rescale: 2.0.0
-
-  ml-spectra-processing@14.35.1:
-    dependencies:
-      binary-search: 1.3.6
-      cheminfo-types: 1.16.0
-      fft.js: 4.0.4
-      is-any-array: 3.0.0
-      ml-matrix: 6.15.1
-      ml-xsadd: 3.0.1
-
-  ml-xsadd@3.0.1: {}
 
   module-details-from-path@1.0.4: {}
 
@@ -6285,10 +6152,6 @@ snapshots:
 
   uuid@11.1.1: {}
 
-  validate.io-array@1.0.6: {}
-
-  validate.io-function@1.0.2: {}
-
   vary@1.1.2: {}
 
   vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1):
@@ -6362,10 +6225,6 @@ snapshots:
   yaml@2.9.1: {}
 
   yocto-queue@0.1.0: {}
-
-  zod-to-json-schema@3.25.0(zod@4.6.7):
-    dependencies:
-      zod: 4.6.7
 
   zod-to-json-schema@3.25.2(zod@4.6.7):
     dependencies:

@@ -13,9 +13,11 @@ import { openDb } from 'db';
 import { loadConfig, splitTtsModel } from './config.ts';
 import { ATTR, PARTICIPANT_KIND_SIP, resolveIdentity, SessionContext } from './context.ts';
 import { closeCall, makeLlmAffirmationJudge, openCall } from './memory.ts';
+import { attachMetrics } from './metrics.ts';
 import { FakeDialPort, FakeSmsPort } from './ports/index.ts';
 import { buildEnrollmentAgent, wireSessionEvents } from './session.ts';
 import { STATE_TOPIC, StateChannel } from './state-channel.ts';
+import { setupTracing } from './tracing.ts';
 
 // Worker entry. Identity comes from server-reported facts (participant kind, SIP attributes,
 // dispatch metadata), the family is bound once here, tools read it from the session context.
@@ -32,6 +34,13 @@ export default defineAgent({
     const cfg = loadConfig();
     const logger = log();
     const { port: db, close: closeDb } = openDb(cfg.DATABASE_URL);
+    // Braintrust: SDK spans over OTLP plus manual call/tool spans (agent/src/tracing.ts). Off without a key.
+    const tracing = setupTracing({
+      enabled: Boolean(cfg.BRAINTRUST_API_KEY),
+      ...(cfg.BRAINTRUST_API_KEY ? { apiKey: cfg.BRAINTRUST_API_KEY } : {}),
+      project: cfg.BRAINTRUST_PROJECT,
+      metadata: { 'movo.job_id': ctx.job.id, 'movo.room': ctx.job.room?.name ?? 'unknown' },
+    });
 
     await ctx.connect();
     // Console and debugger sessions are fake jobs without a remote participant: treat them as a
@@ -61,6 +70,7 @@ export default defineAgent({
     });
     await sc.bindFamily();
     await openCall(sc, direction);
+    tracing?.startCall(sc);
     logger.info(
       { identitySource: identity.source, hasPhone: Boolean(identity.phone), familyBound: Boolean(sc.familyId), history: sc.familyHasHistory, callId: sc.callId },
       'session identity resolved',
@@ -88,6 +98,7 @@ export default defineAgent({
       },
     });
     wireSessionEvents(session, sc);
+    tracing?.attach(session);
 
     // "Under the hood" snapshots for the browser demo: real state only, best effort delivery.
     const state = new StateChannel({ stt: cfg.LK_STT_MODEL, llm: cfg.LK_LLM_MODEL, tts: cfg.LK_TTS_MODEL });
@@ -104,13 +115,23 @@ export default defineAgent({
       state.push(sc);
     });
     session.on(AgentSessionEventTypes.FunctionToolsExecuted, () => state.push(sc));
+    // Per-turn latency from ChatMessage.metrics and plugin metrics -> metrics/<callId>.json (FR-10).
+    const metrics = attachMetrics(session, sc, state, { stt: cfg.LK_STT_MODEL, llm: cfg.LK_LLM_MODEL, tts: cfg.LK_TTS_MODEL });
 
     // Summary + call row finish run once, whichever comes first: session close or job shutdown.
     let finalized: Promise<void> | null = null;
     const finalize = (reason: string): Promise<void> => {
       finalized ??= (async () => {
-        const { summary, error } = await closeCall(sc, llmModel, session.history.items);
-        logger.info({ reason, outcome: sc.outcome, summaryWritten: Boolean(summary), error, usage: session.usage }, 'call closed');
+        const endedAt = sc.now();
+        let metricsPath: string | null = null;
+        try {
+          metricsPath = await metrics.flush(endedAt);
+        } catch (err) {
+          logger.warn({ err }, 'metrics flush failed');
+        }
+        const { summary, error } = await closeCall(sc, llmModel, session.history.items, { metrics: metrics.snapshot(), traceId: tracing?.traceId ?? null });
+        tracing?.finish(sc, { summary, outcome: sc.outcome });
+        logger.info({ reason, outcome: sc.outcome, summaryWritten: Boolean(summary), error, metricsPath, turns: metrics.turns.length, usage: session.usage }, 'call closed');
         await closeDb();
       })();
       return finalized;
@@ -124,7 +145,10 @@ export default defineAgent({
       // onSessionEnd (summary + call row) and the shutdown callbacks before it disconnects.
       ctx.shutdown(`session closed: ${String(ev.reason)}`);
     });
-    ctx.addShutdownCallback(() => finalize('job shutdown'));
+    ctx.addShutdownCallback(async () => {
+      await finalize('job shutdown');
+      await tracing?.shutdown();
+    });
 
     // deleteRoomOnClose: the browser sees the room go away when the agent hangs up (end_call).
     await session.start({ agent, room: ctx.room, inputOptions: { deleteRoomOnClose: true } });

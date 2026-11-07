@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@livekit/agents": "1.9.5",
     "agent": "workspace:*",
-    "autoevals": "^0.4.1",
     "braintrust": "^3.43.0",
     "db": "workspace:*",
     "yaml": "^2.9.1",

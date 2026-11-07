@@ -73,11 +73,11 @@ Commit `phase-4: browser demo with pre-call form`.
 
 ## Phase 5: Interruption, metrics, tracing (Saturday 15:30, 120 min)
 
-- [ ] Interruption test in a real browser call: speech stops within about half a second, context truncation observed; adjust SDK settings if needed; note behavior in README. AC-3.
-- [ ] `agent/src/metrics.ts`: subscribe to `ConversationItemAdded`, read `ChatMessage.metrics` (e2e latency, LLM ttft, TTS ttfb) and `session_usage_updated`; per-plugin metrics for EOU delay if exposed; write `metrics/<callId>.json`.
-- [ ] `agent/src/tracing.ts`: OTel export to Braintrust if the SDK supports it, else manual Braintrust spans per call, turn, tool; attach summary and outcome; flush on end.
-- [ ] `scripts/report-latency.ts`: p50/p95 per metric with n, markdown table.
-- [ ] Verify: two browser calls appear in Braintrust with nested spans; `pnpm report:latency` prints a table.
+- [~] Interruption test in a real browser call: speech stops within about half a second, context truncation observed; adjust SDK settings if needed; note behavior in README. AC-3. (2026-11-07: truncation observed in a live mic session and on typed interruptions, `playout completed with interrupt` logged, interruptions counted in metrics; the half-second timing needs Umut at a microphone)
+- [x] `agent/src/metrics.ts`: subscribe to `ConversationItemAdded`, read `ChatMessage.metrics` (e2e latency, LLM ttft, TTS ttfb) and `session_usage_updated`; per-plugin metrics for EOU delay if exposed; write `metrics/<callId>.json`.
+- [x] `agent/src/tracing.ts`: OTel export to Braintrust if the SDK supports it, else manual Braintrust spans per call, turn, tool; attach summary and outcome; flush on end.
+- [x] `scripts/report-latency.ts`: p50/p95 per metric with n, markdown table.
+- [x] Verify: two browser calls appear in Braintrust with nested spans; `pnpm report:latency` prints a table. (2026-11-07: Braintrust trace for a browser call holds 60+ nested spans incl. tool:lookup_programs; `calls.trace_id` set; `pnpm report:latency` printed p50/p95 over 5 turns)
 
 Commit `phase-5: interruption check + metrics + tracing`.
 

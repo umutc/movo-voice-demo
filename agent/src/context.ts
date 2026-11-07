@@ -150,6 +150,8 @@ export class ProposalMachine {
   /** In-flight verdict for the user turn after the read-back; tools await it via settle(). */
   private pending: Promise<Affirmation | null> | null = null;
   private readonly seenUserItems = new Set<string>();
+  /** Judge verdicts per user turn that followed a read-back; read by the eval invariants. */
+  readonly verdicts: { itemId: string | undefined; text: string; verdict: Affirmation | null }[] = [];
 
   propose(details: ProposalDetails, readbackText: string): Proposal {
     if (this.current && (this.current.state === 'pending' || this.current.state === 'readback_spoken' || this.current.state === 'confirmed')) {
@@ -200,9 +202,14 @@ export class ProposalMachine {
     if (this.seenUserItems.has(itemId)) return;
     this.seenUserItems.add(itemId);
     if (!this.current || (this.current.state !== 'pending' && this.current.state !== 'readback_spoken')) return;
-    this.pending = this.onUserTurn(userText, judge).finally(() => {
-      this.pending = null;
-    });
+    this.pending = this.onUserTurn(userText, judge)
+      .then((verdict) => {
+        this.verdicts.push({ itemId, text: userText ?? '', verdict });
+        return verdict;
+      })
+      .finally(() => {
+        this.pending = null;
+      });
   }
 
   /** Waits for an in-flight verdict. Gives the user-message event a short grace period to arrive. */

@@ -17,7 +17,7 @@ tiers). It is not production software.
 | 2 Database | done | see git log |
 | 3 Context, tools, prompt, memory | done, summary hook re-checked in Phase 4 | see git log |
 | 4 Browser demo | done, demo-phone memory check pending Umut | see git log |
-| 5 Interruption, metrics, tracing | todo | |
+| 5 Interruption, metrics, tracing | done, half-second interruption timing pending a voice test | see git log |
 | 6 Scenario eval | todo | |
 | 7 Inbound phone | todo | |
 | 8 Hardening, deploy, docs | todo | |
@@ -83,6 +83,13 @@ lk agent debugger stop --chat-history
 - 2026-11-07: The React starter was pruned to what the three screens use (Next 15, React 19, livekit-client, components-react, server-sdk). Rive, xyflow, shiki, motion, shadcn, radix and the theme toggle were removed. Fonts come from `next/font/google` (Inter, Space Grotesk).
 - 2026-11-07: The web app reads the repo `.env` through `next.config.ts` (`process.loadEnvFile`), so there is one secrets file. `web/.env.local` written by `lk app create` was deleted.
 - 2026-11-07: `web/` is linted by the root ESLint config. `eslint-config-next` needs `@eslint/eslintrc`, which breaks under the `minimatch >= 11` audit override (no default export), so the starter's lint setup was dropped.
+
+- 2026-11-07: The LiveKit number is +1 929 428 8103. No 718 or 347 numbers were available in the Build-plan inventory; 929 is the third NYC overlay code in the PRD list.
+- 2026-11-07: Eval judge and simulated caller run on LiveKit Inference (`inference.LLM`, judge on `LK_LLM_MODEL`, caller on `openai/gpt-6-luna`) instead of a direct OpenAI key, because the OpenAI account has no active billing. No `openai` or `autoevals` package; scorers are small prompts plus deterministic checks.
+- 2026-11-07: Eval invariants (`eval/invariants.ts`) read the proposal machine's recorded judge verdicts (`proposals.verdicts`) rather than re-classifying user turns, so the invariant checks what the worker itself decided; the read-back match uses the same token-overlap rule as the worker.
+
+- 2026-11-07: `@opentelemetry/api`, `sdk-trace-node` and `exporter-trace-otlp-proto` are declared as direct dependencies of `agent/` at the exact ranges `@livekit/agents` already uses, so no new package enters the tree (pnpm strict mode needs the declaration to import them). CLAUDE.md's "none extra" holds in that sense.
+- 2026-11-07: Braintrust gets both layers: the SDK's OpenTelemetry spans over OTLP and manual `call` and `tool:*` spans; the exporter re-parents SDK spans under the call span because the job root span never leaves LiveKit's provider. Details in SDK notes and Gotchas below.
 
 ## SDK notes
 
@@ -179,6 +186,30 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
 - The room name shows as `unknown` in `calls.room_name` for console sessions; real rooms are
   `web-<id>`.
 
+- `lk number update --id <PN> --sip-dispatch-rule-id <SDR>` and the raw `PhoneNumberService/UpdatePhoneNumber`
+  call both answered `invalid_argument: Failed to update phone number` for the freshly purchased
+  number (retried over several minutes, with `id` and with `phone_number`). The dashboard path
+  (Telephony, Phone numbers, more menu, Assign dispatch rule) is the fallback; the LiveKit Cloud
+  session lives in a browser the agent cannot sign in to.
+- `lk sip dispatch create` wants the `CreateSIPDispatchRuleRequest` shape with a `dispatch_rule`
+  wrapper and snake_case fields; a bare rule object fails with `missing rule`.
+
+# Tracing notes (merge into README)
+
+## SDK notes: tracing bullet
+
+- Tracing (`agent/src/tracing.ts`, checked 2026-11-07 against `@livekit/agents` 1.9.5, `braintrust` 3.43.0, `@opentelemetry/sdk-trace-node` 2.12.0, `@opentelemetry/exporter-trace-otlp-proto` 0.220.0, `@opentelemetry/api` 1.10.0). The Node SDK emits OpenTelemetry spans (`agent_session`, `user_turn`, `agent_turn`, `llm_node`, `tts_node`, `function_tool`, ...). We follow the documented custom-provider pattern: a `NodeTracerProvider` with a `BatchSpanProcessor(OTLPTraceExporter)` plus `telemetry.FanoutSpanProcessor`, then `telemetry.setTracerProvider(provider, { metadata, registerSpanProcessor: (p) => fanout.add(p) })`. With the fanout in place, LiveKit Cloud tracing attaches its own processor to the same provider. The exporter posts to `https://api.braintrust.dev/otel/v1/traces` with `Authorization: Bearer <key>` and `x-bt-parent: project_name:movo-voice-demo` (source: docs.braintrust.dev/integrations/sdk-integrations/opentelemetry/send-traces-and-logs). Manual Braintrust spans (`initLogger` + `logger.startSpan`) cover what OTel does not: a root `call` span per session (input: identity source, room name), one `tool:<name>` child span per tool execution (arguments, output, `durationMs`, from `FunctionToolsExecuted`), and the final `{ summary, outcome, bookingIds, callbackIds }` logged on the root. One trace per call: the Braintrust SDK issues OTel-shaped ids (32-hex `root_span_id`, 16-hex `span_id`), so the exporter rewrites each SDK span into the call span's trace id and hangs top-level spans under the call span. The root span id is stored as `calls.trace_id`.
+- The OTel packages are direct dependencies of `agent` at the same ranges `@livekit/agents` declares (`^1.9.0`, `^2.8.0`, `^0.220.0`). pnpm is strict, so an import needs its own entry. `@opentelemetry/api` is declared too: without it, pnpm resolved the exporter's peer to a second copy (1.9.1), while the SDK uses 1.10.0. One copy means one context manager and one `instanceof` world.
+
+## Gotchas
+
+- Braintrust's `x-bt-parent` header accepts a span slug (`span.export()`) to nest an OTLP trace under a span. The docs say so, but on 2026-11-07 every slug we sent got `403 Missing update access to span id trace, or the span does not exist`. The 403 also came 15 s after the span was flushed. `project_name:` and the logger slug both returned 200. Fix: send `project_name:` and move the SDK spans into the call trace ourselves (next item).
+- The framework creates the job root span (`job_entrypoint`) before the entry function runs, on LiveKit's own provider. Our provider only exists once the entry runs, so every SDK span has a parent that never reaches Braintrust. Braintrust's logs table only lists traces that have a root span, so these spans would not show up. Without LiveKit Cloud tracing it is worse: each top-level SDK span starts its own trace. Fix: a wrapping exporter tracks the span ids this provider started. Before export, it sets every span's trace id to the call span's trace id, and it re-parents spans with a foreign parent or no parent under the call span. Only the Braintrust export sees the rewrite; LiveKit Cloud's processor gets the original span. Exports wait up to 15 s for `startCall`, so spans from before the call span exists (for example `room_connect`) also land in the call trace.
+- Do not call `provider.shutdown()` in the job shutdown callback. Shutdown callbacks run inside the framework's `job_shutdown` span, and that span and `job_entrypoint` end after the callbacks. After them, the framework calls `forceFlush()` on the current provider (`flushJobTraces`). A shutdown would drop those last spans and would also stop LiveKit Cloud's processor, which sits in the same fanout. `TracingHandle.shutdown()` therefore flushes Braintrust first (the OTLP spans name the call span as parent), then calls `forceFlush()`. The whole step is capped at 9 s.
+- `@opentelemetry/sdk-trace-node` 2.12.0 is marked deprecated on npm ("Use @opentelemetry/sdk-trace package"). `@livekit/agents` 1.9.5 still depends on it, so we stay on it to keep one copy of the SDK.
+- Duplicate tool rows: the SDK's own `function_tool` OTel span and our manual `tool:<name>` span both appear in the trace. The manual span carries the parsed arguments, the output and `durationMs` in a form the Braintrust UI shows directly.
+- Smoke test leftovers: six `call` traces with room names `scratch-<epoch ms>`, two standalone `agent_turn` traces, plus `slug-probe` and `probe_child` rows, are in project `movo-voice-demo` from the 2026-11-07 tracing check. Filter them out or delete them in the UI.
+
 ## Known gaps
 
 - OpenAI account has no active billing yet (429 "account is not active"); the eval judge,
@@ -187,6 +218,9 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
   debugger run cover the code path; the browser check needs the real number typed by Umut.
 - The LiveKit Cloud transcript/session view was not opened by the agent; session reports were
   uploaded (`Session report uploaded to LiveKit Cloud` in the worker log).
+- AC-3 interruption timing: a live voice session showed `playout completed with interrupt` and truncated
+  transcripts when the caller spoke or typed over the agent, so interruption handling works; the
+  "about half a second" stop time still needs a person with a microphone to confirm.
 - `pnpm audit --prod`: clean on 2026-11-07 after removing the two plugins and overriding `glob`
   and `minimatch`.
 

@@ -27,13 +27,21 @@ function main(): void {
   const only = process.argv[2];
   mkdirSync(outDir, { recursive: true });
   const files = readdirSync(srcDir).filter((f) => f.endsWith('.template.json'));
+  let failed = 0;
   for (const f of files) {
     const target = f.replace('.template.json', '.json');
     if (only && !target.startsWith(only)) continue;
-    const rendered = render(readFileSync(join(srcDir, f), 'utf8'), process.env);
-    writeFileSync(join(outDir, target), rendered);
-    console.log(`rendered telephony/out/${target}`);
+    try {
+      const rendered = render(readFileSync(join(srcDir, f), 'utf8'), process.env);
+      writeFileSync(join(outDir, target), rendered);
+      console.log(`rendered telephony/out/${target}`);
+    } catch (err) {
+      // Optional templates (outbound trunk) stay unrendered until their feature is configured.
+      console.log(`skipped ${target}: ${err instanceof Error ? err.message : String(err)}`);
+      failed += 1;
+    }
   }
+  if (only && failed > 0) process.exit(1);
 }
 
 if (process.env.VITEST === undefined) main();
