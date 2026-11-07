@@ -21,6 +21,7 @@ tiers). It is not production software.
 | 6 Scenario eval | done | see git log |
 | 7 Inbound phone | done, two calls from one phone | see git log |
 | 8 Hardening, deploy, docs | in progress: deploy running, docs | see git log |
+| Stretch: read-only console | done, all 7 console pages behind `CONSOLE_PASSWORD` | `web: read-only tenant console` |
 
 Phase 7: number +1 929 428 8103 bought, dispatch rule created, rule assignment and the phone test
 pending Umut.
@@ -30,6 +31,8 @@ page, Braintrust traces with nested spans, metrics files and `pnpm report:latenc
 `pnpm eval --profile core` PASS (10/10), `pnpm test` 44/44, `pnpm test:db` 6/6.
 
 Mocked: `SmsPort` and `DialPort` (fakes in live runs too, no Twilio).
+
+Console pages shipped (2026-11-07, `/console`, read-only, screenshots in `design/shots/console-*-1280.png`): Dashboard, Calls (list with outcome, channel and day filters, detail at `/console/calls/[id]`), Callbacks, Quality, Families, Programs and slots, Agent settings. Left out: Cloud simulations on Quality (no stored data source), callback status (waiting or done) and handling buttons (no status column, console is read-only), the per-invariant list on Quality (`last-run.json` stores only failed invariant names), recordings.
 
 Not done: outbound (Phase 9), SMS and second guardian (stretch), the Cartesia quality check, audio
 simulations, the human phone test, the half-second interruption timing.
@@ -212,6 +215,9 @@ Rules:
 - 2026-11-07: LiveKit Cloud text simulations run against the real Supabase database (the worker has no simulation-mode switch yet); the two scripted scenarios did not book anything.
 
 - 2026-11-07: `web/` builds for Cloudflare Workers with `@opennextjs/cloudflare` (`pnpm -F web cf:build`, worker `movo-voice-demo-web`, `nodejs_compat`); `workerd` was added to the pnpm build allowlist because its postinstall fetches the runtime binary. postgres.js 3.4 has a Workers entry; the route still has to be proven against the real database after the first deploy. Steps and env names: `web/README-cloudflare.md`.
+- 2026-11-07: The read-only console (`/console`) sits behind one `CONSOLE_PASSWORD`. `web/middleware.ts` returns 404 for every `/console` path when the variable is unset, lets `/console/login` through, and otherwise wants an httpOnly cookie (path `/console`, 12 h, `secure` in production) holding HMAC-SHA256 of a fixed message keyed by the password (Web Crypto, so the same code runs in the edge middleware and the login server action). The console layout repeats the 404 check. No accounts, no rate limit; a leaked cookie stays valid until the password changes.
+- 2026-11-07: `amplify.yml` copies only a fixed list of variables into `.env.production`, so `web/next.config.ts` inlines `CONSOLE_PASSWORD`, `FEATURE_SMS` and `FEATURE_OUTBOUND` at build time through `env`. Only server code and the middleware reference them (the built client chunks were checked: no hit). Changing the password on Amplify needs a new build.
+- 2026-11-07: Console data sources: every number is a Drizzle query in `db/read.ts` (`listConsoleCalls`, `getConsoleCall`, `listCallMetrics`, `listConsoleCallbacks`, `listConsoleFamilies`, `listConsolePrograms`, `listConsoleSlots`, `countCallbacks`), one short-lived connection per helper like `getCallView`. Latency on Quality and in call detail is nearest-rank p50/p95 over `calls.metrics.turns` (same math as `scripts/report-latency.ts`, with n per metric), not over `metrics/*.json`. The eval scorecard reads `eval/out/last-run.json` at request time and is replaced by a "run pnpm eval" line when the file is absent (the Amplify deploy). A callback links to the call whose time span holds the request, preferring a transcript with a `request_human_callback` tool call, then family or phone. Days and clocks use New York time. Phones are masked (`+1 718 ••• 0142`); family emails are not shown.
 
 ## SDK notes
 
