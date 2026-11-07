@@ -28,10 +28,37 @@ const requestSchema = z.object({
 
 export const revalidate = 0;
 
+// Abuse limiting, not authentication: a browser on another site cannot mint tokens, and each token
+// is short-lived and bound to a two-participant room (one caller plus the agent).
+const SITE_ORIGINS = ['https://movo-voice-demo.umutcelik.com.tr', 'https://main.dall2asqwbqvd.amplifyapp.com'];
+
+function allowedOrigins(): Set<string> {
+  const extra = (process.env.ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  const dev = process.env.NODE_ENV !== 'production' ? ['http://localhost:3000'] : [];
+  return new Set([...SITE_ORIGINS, ...dev, ...extra]);
+}
+
+function requestOrigin(req: Request): string | null {
+  const origin = req.headers.get('origin');
+  if (origin) return origin;
+  const referer = req.headers.get('referer');
+  if (!referer) return null;
+  try {
+    return new URL(referer).origin;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
   if (process.env.NODE_ENV !== 'development' && process.env.ALLOW_TOKEN_ROUTE !== 'true') {
     return new NextResponse('token route is enabled in development only (set ALLOW_TOKEN_ROUTE=true to override)', { status: 403 });
   }
+  const origin = requestOrigin(req);
+  if (!origin || !allowedOrigins().has(origin)) return new NextResponse('origin not allowed', { status: 403 });
   const url = process.env.LIVEKIT_URL;
   const apiKey = process.env.LIVEKIT_API_KEY;
   const apiSecret = process.env.LIVEKIT_API_SECRET;
@@ -63,10 +90,10 @@ export async function POST(req: Request) {
   const suffix = Math.random().toString(36).slice(2, 8);
   const roomName = `web-${suffix}`;
   const identity = `parent-${suffix}`;
-  const at = new AccessToken(apiKey, apiSecret, { identity, name: form[ATTR.guardianName], ttl: '15m', attributes });
+  const at = new AccessToken(apiKey, apiSecret, { identity, name: form[ATTR.guardianName], ttl: '5m', attributes });
   const grant: VideoGrant = { room: roomName, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true };
   at.addGrant(grant);
-  at.roomConfig = new RoomConfiguration({ agents: [new RoomAgentDispatch({ agentName })] });
+  at.roomConfig = new RoomConfiguration({ maxParticipants: 2, emptyTimeout: 120, agents: [new RoomAgentDispatch({ agentName })] });
 
   return NextResponse.json(
     { server_url: url, participant_token: await at.toJwt(), room_name: roomName, participant_name: form[ATTR.guardianName] },

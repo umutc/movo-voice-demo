@@ -192,6 +192,8 @@ Rules:
 - 2026-11-07: The read-back affirmation is classified by a small LLM call (`makeLlmAffirmationJudge`, one word YES/NO/OTHER) only on the user turn right after the read-back; a failed call counts as not confirmed. No keyword matching in production code. Behavior tests inject a scripted judge for determinism; the LLM judge has its own test.
 - 2026-11-07: The proposal machine is driven from the public `conversation_item_added` event (assistant and user messages) and `function_tools_executed`, not from the `onUserTurnCompleted` hook, because that hook does not fire for text input (`session.run`, debugger). `book_trial_class` awaits the in-flight verdict (`proposals.settle()`), with a 1.5 s grace window for the user-message event.
 - 2026-11-07: `CONSOLE_SIMULATE_SIP_PHONE` is a dev-only knob honored only for fake jobs (`lk agent console|debugger`, no room) so the returning-family path can be exercised without a phone. It is ignored whenever a real participant exists.
+- 2026-11-07: `/api/token` accepts a POST only from an allowed site origin (`Origin`, falling back to the `Referer` origin): the custom domain, the Amplify default domain, `http://localhost:3000` outside production, plus anything in the optional comma-separated `ALLOWED_ORIGINS` env. Other origins get 403.
+- 2026-11-07: Browser tokens live 5 minutes (`ttl: '5m'`) and carry `roomConfig` with `maxParticipants: 2` and `emptyTimeout: 120`, so one token fits one caller plus the agent and an empty room closes after two minutes.
 - 2026-11-07: Supabase RLS enabled on every table in `public` and `test` without policies. The app connects as the table owner (`postgres`), which bypasses RLS; the default `anon` and `authenticated` PostgREST roles are blocked. The Supabase MCP flagged the open tables as critical.
 
 - 2026-11-07: The live call page has a small "type instead of talking" input. It is not in the mockup; it lets a tester drive a booking without a microphone and it is how the Playwright checks run. Typed input interrupts the agent's speech like voice does.
@@ -330,6 +332,7 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
 
 ## Known gaps
 
+- The origin check, 5-minute TTL and 2-participant room cap on `/api/token` limit abuse. They are not authentication: a non-browser client can set any `Origin` header, and anyone who reaches the form can still start a call.
 - The OpenAI account has no active billing (429 "account is not active"). This no longer blocks
   evals: the judge and the simulated caller run on LiveKit Inference. `OPENAI_API_KEY` stays unused
   until billing exists.
