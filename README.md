@@ -19,7 +19,7 @@ tiers). It is not production software.
 | 4 Browser demo | done | see git log |
 | 5 Interruption, metrics, tracing | done | see git log |
 | 6 Scenario eval | done | see git log |
-| 7 Inbound phone | number bought, assignment pending Umut | see git log |
+| 7 Inbound phone | done, first call verified, second phone cut | see git log |
 | 8 Hardening, deploy, docs | in progress: deploy running, docs | see git log |
 
 Phase 7: number +1 929 428 8103 bought, dispatch rule created, rule assignment and the phone test
@@ -340,6 +340,27 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
   "about half a second" stop time still needs a person with a microphone to confirm.
 - `pnpm audit --prod`: clean on 2026-11-07 after removing the two plugins and overriding `glob`
   and `minimatch`.
+
+## Latency
+
+`pnpm metrics:export && pnpm report:latency`, run on 2026-11-07, pasted verbatim. Turns come from
+browser calls (typed turns have no end-to-end value because nobody spoke) and from the phone call
+handled by the LiveKit Cloud deployment (spoken turns, 13 assistant turns). Dev pipeline:
+deepgram/nova-3, openai/gpt-6.1-terra, deepgram/aura-2.
+
+```
+
+| Metric | p50 ms | p95 ms | n |
+|---|---|---|---|
+| e2eMs | 1917 | 2639 | 6 |
+| endOfTurnMs | 392 | 744 | 12 |
+| transcriptionDelayMs | 198 | 741 | 12 |
+| llmTtftMs | 1018 | 1436 | 49 |
+| ttsTtfbMs | 90 | 141 | 22 |
+```
+
+End to end is measured from the caller's end of speech to the first agent audio frame; LLM first
+token is the largest share. p95 over few samples is noisy; the table grows with every call.
 
 ## Eval scorecard
 

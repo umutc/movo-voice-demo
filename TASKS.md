@@ -95,14 +95,14 @@ Commit `phase-6: scenario eval + invariants`.
 
 - [x] `lk number search --country-code US --area-code 718` (or 347, 929); `lk number purchase --numbers +1...` (first number free). (2026-11-07: no 718 or 347 inventory; purchased +1 929 428 8103, PN_PPN_RRYyfgL5NYYG)
 - [x] Render `telephony/dispatch-rule.template.json` -> `telephony/out/` (gitignored); `lk sip dispatch create --config ...`; `lk number update --id <number_id> --sip-dispatch-rule-id <rule_id>`. (2026-11-07: rule SDR_ibvm4ZNXvrBy created from the rendered file; `lk number update` and the raw API returned invalid_argument, Umut assigned the rule in the dashboard; `lk number list` now shows it)
-- [ ] Confirm the participant kind is SIP and `sip.phoneNumber` arrives; identity source recorded as `caller_id_only`; memory works for a synthetic family created by an earlier phone call.
-- [ ] Verify: both demo phones call, each completes a booking; second call from the same phone is recognized. AC-6.
+- [x] Confirm the participant kind is SIP and `sip.phoneNumber` arrives; identity source recorded as `caller_id_only`; memory works for a synthetic family created by an earlier phone call. (2026-11-07: cloud log shows identitySource caller_id_only, hasPhone true, familyBound true, history true; the seeded demo family was greeted with its summary)
+- [~] Verify: both demo phones call, each completes a booking; second call from the same phone is recognized. AC-6. (2026-11-07: Umut's phone called +1 929 428 8103, the cloud agent recognized the demo family, booked Emma into Juniors U8 and wrote the summary; the second phone was cut per the header cut list item 5; a second call from the same phone is the same code path verified for browser and debugger sessions and can be repeated any time)
 
 Commit `phase-7: inbound phone via LiveKit number`.
 
 ## Phase 8: Hardening, deploy, docs, recording (Sunday 13:30, 180 min incl. lunch)
 
-- [~] 20+ real turns across browser and phone with dev models; `pnpm report:latency`. (2026-11-07: 10 assistant turns from two typed browser calls in `metrics/`; spoken turns with end-to-end latency need Umut's voice and phone calls, then `pnpm report:latency` again for the README table)
+- [x] 20+ real turns across browser and phone with dev models; `pnpm report:latency`. (2026-11-07: 49 assistant turns over 8 calls after `pnpm metrics:export`, 13 of them spoken on the phone; table in README)
 - [~] Digit-spelling step: check endpointing while reading a phone number; adjust if needed. (needs a voice call; eval scenario 8 covers the read-back logic in text)
 - [~] `lk agent simulate text -n 10` plus 2 or 3 audio simulations in the dashboard; screenshots. (2026-11-07: two scripted text simulations against the deployed agent passed 2/2, run SR_ZGiCTDKGyFYc; the 10 generated scenarios and the audio simulations were cut per the header cut list item 1)
 - [-] Switch `LK_TTS_MODEL` to Cartesia for a quality check; back to the cheap model until recording. (cut list item 2; `LK_TTS_MODEL_RECORDING` in .env.example holds the Cartesia line for the recording)

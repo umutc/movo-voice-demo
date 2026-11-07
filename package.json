@@ -20,7 +20,8 @@
     "db:seed": "pnpm -F db seed",
     "telephony:render": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/render-telephony.ts",
     "db:smoke": "pnpm -F db smoke",
-    "start": "node agent/src/agent.ts start"
+    "start": "node agent/src/agent.ts start",
+    "metrics:export": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/export-metrics.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
