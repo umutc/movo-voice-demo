@@ -12,36 +12,119 @@ tiers). It is not production software.
 
 | Phase | State | Commit |
 |---|---|---|
-| 0 Accounts and local setup | done, OpenAI billing pending | `3d3df1f` |
+| 0 Accounts and local setup | done, OpenAI billing pending | see git log |
 | 1 Scaffold and hello-world agent | done | see git log |
 | 2 Database | done | see git log |
-| 3 Context, tools, prompt, memory | done, summary hook re-checked in Phase 4 | see git log |
-| 4 Browser demo | done, demo-phone memory check pending Umut | see git log |
-| 5 Interruption, metrics, tracing | done, half-second interruption timing pending a voice test | see git log |
+| 3 Context, tools, prompt, memory | done | see git log |
+| 4 Browser demo | done | see git log |
+| 5 Interruption, metrics, tracing | done | see git log |
 | 6 Scenario eval | done | see git log |
-| 7 Inbound phone | todo | |
-| 8 Hardening, deploy, docs | todo | |
+| 7 Inbound phone | number bought, assignment pending Umut | see git log |
+| 8 Hardening, deploy, docs | in progress: deploy running, docs | see git log |
 
-Verified end to end so far: LiveKit worker registration, text and audio conversations through
-`lk agent debugger`, migrations, seed and booking semantics on real Postgres (`pnpm test:db`), a
-browser call (typed and spoken) that booked a trial, wrote the summary and showed both on the booked
-page, one Braintrust span.
+Phase 7: number +1 929 428 8103 bought, dispatch rule created, rule assignment and the phone test
+pending Umut.
+
+Verified end to end today: browser calls (typed and spoken) with booking and summary on the booked
+page, Braintrust traces with nested spans, metrics files and `pnpm report:latency`,
+`pnpm eval --profile core` PASS (10/10), `pnpm test` 44/44, `pnpm test:db` 6/6.
+
+Mocked: `SmsPort` and `DialPort` (fakes in live runs too, no Twilio).
+
+Not done: outbound (Phase 9), SMS and second guardian (stretch), the Cartesia quality check, audio
+simulations, the human phone test, the half-second interruption timing.
+
+## Scope
+
+This is a weekend prototype. It has production shape (ports, transactional writes, identity rules,
+tests, evals, tracing) and prototype scope (one fictional academy, synthetic data, free tiers). It is
+not production software.
+
+What works today (verified in a real run, see Status):
+
+- A browser call, typed or spoken, that books a trial class in Postgres.
+- Returning-family memory and a post-call summary.
+- The read-back protocol: a booking needs a confirmed proposal.
+- Booking semantics (locking, idempotency) on real Postgres (`pnpm test:db`).
+- Braintrust traces with nested spans, metrics files and `pnpm report:latency`.
+- A 10-scenario eval that passes (`pnpm eval --profile core`).
+
+What is mocked:
+
+- `SmsPort` and `DialPort` are fakes in every run, including live runs. `agent.ts` wires
+  `FakeSmsPort` and `FakeDialPort`. No Twilio code runs.
+- All family, program, price and slot data is synthetic.
+
+What is not done or not verified yet:
+
+- Outbound calls (Phase 9). The Twilio trial trunk is not set up (`FEATURE_OUTBOUND=false`).
+- SMS confirmation and a second guardian (stretch). No Twilio account is connected
+  (`FEATURE_SMS=false`).
+- An inbound phone call by a human to the LiveKit number, and the second-call recognition of the
+  same phone (AC-6). The dispatch rule is created but not yet assigned to the number.
+- The Cartesia voice (`LK_TTS_MODEL_RECORDING`). Only the Deepgram voice ran.
+- Audio simulations in LiveKit Cloud.
+- The half-second interruption stop time (AC-3).
+- Deployment to LiveKit Cloud: in progress, not yet verified with the laptop closed (AC-7).
+
+Not in scope: payments, CRM, admin login, TCPA or HIPAA work, a live transfer to a human,
+non-English, voicemail detection.
 
 ## Architecture
 
-See `PRD.md` section 4 for the diagram. In short: LiveKit Cloud room, Node.js agent worker
-(`@livekit/agents` 1.9.5), LiveKit Inference for STT, LLM and TTS, Supabase Postgres through
-Drizzle, Braintrust for traces and evals.
+```mermaid
+flowchart LR
+  subgraph Channels
+    B["Browser: web/ (Next.js)<br/>web/app/api/token"] -->|WebRTC| LK
+    P["Phone inbound:<br/>LiveKit number + dispatch rule<br/>telephony/"] -->|SIP| LK
+    O["Phone outbound (optional,<br/>not verified): scripts/call.ts"] -.->|SIP| LK
+  end
+  LK["LiveKit Cloud room"] <--> A
+  subgraph Worker["agent/src (Node.js worker, @livekit/agents 1.9.5)"]
+    A["agent.ts: entry, identity,<br/>session wiring"] --> C["context.ts: identity source,<br/>bound familyId, proposal state"]
+    A --> S["session.ts + prompt.ts"]
+    S --> T["tools/*.ts: lookup_programs,<br/>check_trial_slots, propose_booking,<br/>book_trial_class,<br/>request_human_callback, end_call"]
+    A --> M["memory.ts: family lookup,<br/>post-call summary"]
+    A --> X["metrics.ts, tracing.ts"]
+  end
+  A -->|STT / LLM / TTS| INF["LiveKit Inference"]
+  T -->|DbPort| DB[("Supabase Postgres<br/>db/schema.ts, Drizzle")]
+  M -->|DbPort| DB
+  A -.->|SmsPort, DialPort: fakes| TW["Twilio (not connected)"]
+  X -->|spans| BT["Braintrust"]
+  X -->|"metrics/&lt;callId&gt;.json"| R["pnpm report:latency"]
+  TEST["agent/test, db/test:<br/>Vitest, db/fake.ts"] --> A
+  EV["eval/run.ts: simulated caller,<br/>invariants.ts, scorers.ts,<br/>fakes only"] --> A
+```
+
+Notes:
+
+- Tools read `familyId` from the session context only. Tool arguments never choose
+  the family.
+- Live runs use the Drizzle `DbPort`. Tests and evals use the in-memory
+  `db/fake.ts`, so an eval cannot send an SMS or place a call.
+- Dashed lines are paths that exist in code but are not exercised.
 
 ## Setup
 
-1. Install mise, then `mise install` in the repo (Node 24, pnpm 12).
-2. `brew install livekit-cli`, then `lk cloud auth`.
-3. `cp .env.example .env` and fill the lines marked FILL. Never commit `.env`.
-4. `pnpm install`.
-5. `pnpm db:generate && pnpm db:migrate && pnpm db:seed` (Phase 2).
-6. `pnpm -F agent dev` to run the worker locally.
-7. `pnpm -F web dev` for the browser demo (Phase 4).
+Start from a clean macOS machine. You need accounts for LiveKit Cloud, Supabase
+and Braintrust. Twilio is optional.
+
+1. Install mise, then run `mise install` in the repo. This pins Node 24 and pnpm 12.
+2. Run `brew install livekit-cli`, then `lk cloud auth`. Check with `lk project list`.
+3. Run `cp .env.example .env`. Fill the lines marked FILL (LiveKit, Supabase,
+   Braintrust). Never commit `.env`.
+4. Run `pnpm install`. The build-script allow list is in `pnpm-workspace.yaml`.
+5. Run `pnpm db:generate && pnpm db:migrate && pnpm db:seed`. Set
+   `DEMO_RETURNING_PHONE` first, because the seed uses it for the demo family.
+6. Run `pnpm test`, then `pnpm test:db`. Both must pass before you go on.
+7. Run `pnpm -F agent dev`. The worker registers as `enroll-agent`.
+8. In a second terminal, run `pnpm -F web dev`. Open http://localhost:3000.
+9. Phone, optional: run `lk number search --country-code US`, then
+   `lk number purchase --numbers +1...`. Run `pnpm telephony:render`, then
+   `pnpm telephony:render && lk sip dispatch create telephony/out/dispatch-rule.json`. Assign the
+   rule to the number in the dashboard (see Gotchas for the CLI failure).
+10. Run `pnpm eval --profile core`. The scorecard prints to the terminal.
 
 ## Commands
 
@@ -63,6 +146,38 @@ lk agent debugger start src/agent.ts
 lk agent debugger say "Hi, I want to sign up my daughter."
 lk agent debugger stop --chat-history
 ```
+
+## Identity and trust
+
+All family data in this demo is synthetic. Nobody can read real personal history
+through it, because none exists. Production needs real verification first.
+
+The worker decides how far to trust a caller from facts the server reports, never
+from what the caller or the browser claims.
+
+- `caller_id_only`: the room participant is a SIP participant, and the phone is
+  the SIP caller id. It may load a family in the synthetic dataset. It is not
+  verification, because caller id can be spoofed.
+- `self_reported`: browser form values or outbound dispatch metadata. It may load
+  a family only if that family is flagged `is_demo`. Otherwise the call starts
+  with a new family.
+
+(The level is stored in `calls.identity_source`.)
+
+Rules:
+
+- The participant kind decides the level. A `sip.phoneNumber` attribute alone does
+  not make a call `caller_id_only`.
+- The web token endpoint sets only four attributes: guardian name, phone, email,
+  consent. It does not let the browser edit its own attributes or metadata.
+- The bound family is set once at session start and lives in the session context.
+  A tool argument cannot choose or change it.
+- If a tool needs a family and none is bound, it creates one from the conversation.
+- Details a tool collects for other reasons (a second guardian's phone) are
+  ordinary data, not identity.
+- Phones are stored in E.164. Validation uses `isPossible()`, so seeded `555`
+  numbers pass.
+- A must-pass eval invariant and a behavior test cover family isolation.
 
 ## Decisions
 
@@ -143,6 +258,8 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
   hangs up, which is how the browser learns the call ended.
 - Console and debugger: `ctx.isFakeJob` is true, `ctx.connect()` is a no-op and there is no remote
   participant; `waitForParticipant()` would hang.
+- Tracing (`agent/src/tracing.ts`, checked 2026-11-07 against `@livekit/agents` 1.9.5, `braintrust` 3.43.0, `@opentelemetry/sdk-trace-node` 2.12.0, `@opentelemetry/exporter-trace-otlp-proto` 0.220.0, `@opentelemetry/api` 1.10.0). The Node SDK emits OpenTelemetry spans (`agent_session`, `user_turn`, `agent_turn`, `llm_node`, `tts_node`, `function_tool`, ...). We follow the documented custom-provider pattern: a `NodeTracerProvider` with a `BatchSpanProcessor(OTLPTraceExporter)` plus `telemetry.FanoutSpanProcessor`, then `telemetry.setTracerProvider(provider, { metadata, registerSpanProcessor: (p) => fanout.add(p) })`. With the fanout in place, LiveKit Cloud tracing attaches its own processor to the same provider. The exporter posts to `https://api.braintrust.dev/otel/v1/traces` with `Authorization: Bearer <key>` and `x-bt-parent: project_name:movo-voice-demo` (source: docs.braintrust.dev/integrations/sdk-integrations/opentelemetry/send-traces-and-logs). Manual Braintrust spans (`initLogger` + `logger.startSpan`) cover what OTel does not: a root `call` span per session (input: identity source, room name), one `tool:<name>` child span per tool execution (arguments, output, `durationMs`, from `FunctionToolsExecuted`), and the final `{ summary, outcome, bookingIds, callbackIds }` logged on the root. One trace per call: the Braintrust SDK issues OTel-shaped ids (32-hex `root_span_id`, 16-hex `span_id`), so the exporter rewrites each SDK span into the call span's trace id and hangs top-level spans under the call span. The root span id is stored as `calls.trace_id`.
+- The OTel packages are direct dependencies of `agent` at the same ranges `@livekit/agents` declares (`^1.9.0`, `^2.8.0`, `^0.220.0`). pnpm is strict, so an import needs its own entry. `@opentelemetry/api` is declared too: without it, pnpm resolved the exporter's peer to a second copy (1.9.1), while the SDK uses 1.10.0. One copy means one context manager and one `instanceof` world.
 
 ## Gotchas
 
@@ -194,15 +311,6 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
 - `lk sip dispatch create` wants the `CreateSIPDispatchRuleRequest` shape with a `dispatch_rule`
   wrapper and snake_case fields; a bare rule object fails with `missing rule`.
 
-# Tracing notes (merge into README)
-
-## SDK notes: tracing bullet
-
-- Tracing (`agent/src/tracing.ts`, checked 2026-11-07 against `@livekit/agents` 1.9.5, `braintrust` 3.43.0, `@opentelemetry/sdk-trace-node` 2.12.0, `@opentelemetry/exporter-trace-otlp-proto` 0.220.0, `@opentelemetry/api` 1.10.0). The Node SDK emits OpenTelemetry spans (`agent_session`, `user_turn`, `agent_turn`, `llm_node`, `tts_node`, `function_tool`, ...). We follow the documented custom-provider pattern: a `NodeTracerProvider` with a `BatchSpanProcessor(OTLPTraceExporter)` plus `telemetry.FanoutSpanProcessor`, then `telemetry.setTracerProvider(provider, { metadata, registerSpanProcessor: (p) => fanout.add(p) })`. With the fanout in place, LiveKit Cloud tracing attaches its own processor to the same provider. The exporter posts to `https://api.braintrust.dev/otel/v1/traces` with `Authorization: Bearer <key>` and `x-bt-parent: project_name:movo-voice-demo` (source: docs.braintrust.dev/integrations/sdk-integrations/opentelemetry/send-traces-and-logs). Manual Braintrust spans (`initLogger` + `logger.startSpan`) cover what OTel does not: a root `call` span per session (input: identity source, room name), one `tool:<name>` child span per tool execution (arguments, output, `durationMs`, from `FunctionToolsExecuted`), and the final `{ summary, outcome, bookingIds, callbackIds }` logged on the root. One trace per call: the Braintrust SDK issues OTel-shaped ids (32-hex `root_span_id`, 16-hex `span_id`), so the exporter rewrites each SDK span into the call span's trace id and hangs top-level spans under the call span. The root span id is stored as `calls.trace_id`.
-- The OTel packages are direct dependencies of `agent` at the same ranges `@livekit/agents` declares (`^1.9.0`, `^2.8.0`, `^0.220.0`). pnpm is strict, so an import needs its own entry. `@opentelemetry/api` is declared too: without it, pnpm resolved the exporter's peer to a second copy (1.9.1), while the SDK uses 1.10.0. One copy means one context manager and one `instanceof` world.
-
-## Gotchas
-
 - Braintrust's `x-bt-parent` header accepts a span slug (`span.export()`) to nest an OTLP trace under a span. The docs say so, but on 2026-11-07 every slug we sent got `403 Missing update access to span id trace, or the span does not exist`. The 403 also came 15 s after the span was flushed. `project_name:` and the logger slug both returned 200. Fix: send `project_name:` and move the SDK spans into the call trace ourselves (next item).
 - The framework creates the job root span (`job_entrypoint`) before the entry function runs, on LiveKit's own provider. Our provider only exists once the entry runs, so every SDK span has a parent that never reaches Braintrust. Braintrust's logs table only lists traces that have a root span, so these spans would not show up. Without LiveKit Cloud tracing it is worse: each top-level SDK span starts its own trace. Fix: a wrapping exporter tracks the span ids this provider started. Before export, it sets every span's trace id to the call span's trace id, and it re-parents spans with a foreign parent or no parent under the call span. Only the Braintrust export sees the rewrite; LiveKit Cloud's processor gets the original span. Exports wait up to 15 s for `startCall`, so spans from before the call span exists (for example `room_connect`) also land in the call trace.
 - Do not call `provider.shutdown()` in the job shutdown callback. Shutdown callbacks run inside the framework's `job_shutdown` span, and that span and `job_entrypoint` end after the callbacks. After them, the framework calls `forceFlush()` on the current provider (`flushJobTraces`). A shutdown would drop those last spans and would also stop LiveKit Cloud's processor, which sits in the same fanout. `TracingHandle.shutdown()` therefore flushes Braintrust first (the OTLP spans name the call span as parent), then calls `forceFlush()`. The whole step is capped at 9 s.
@@ -212,8 +320,9 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
 
 ## Known gaps
 
-- OpenAI account has no active billing yet (429 "account is not active"); the eval judge,
-  simulated caller, and SDK LLM-judge tests cannot run until it is added.
+- The OpenAI account has no active billing (429 "account is not active"). This no longer blocks
+  evals: the judge and the simulated caller run on LiveKit Inference. `OPENAI_API_KEY` stays unused
+  until billing exists.
 - Browser AC-2 (form with `DEMO_RETURNING_PHONE` loads the demo family): the context test and the
   debugger run cover the code path; the browser check needs the real number typed by Umut.
 - The LiveKit Cloud transcript/session view was not opened by the agent; session reports were
@@ -252,8 +361,84 @@ authorize the new one; scenario 13 proves a yes to an unrelated question did not
 
 ## Cost estimate
 
-Filled in Phase 8 from PRD section 15 with stated assumptions.
+This is an estimate, not a tariff. Rates are the LiveKit Build plan figures from
+the PRD (Nov 2026). Check LiveKit's pricing page before you rely on them.
+
+Assumptions (all are assumptions, not measurements):
+
+| Item | Value |
+|---|---|
+| Agent turns per call minute | 4 |
+| LLM input tokens per turn | 2,000 (prompt, tools, history) |
+| LLM output tokens per turn | 60 |
+| Speech rate | 150 words/min, 6 chars/word = 900 chars/min |
+| Agent speaking ratio | 0.4 (base), about 0.65 (high) |
+| Agent TTS chars per call minute | 360 (base), 600 (high) |
+| Prompt caching | none counted |
+
+Derived per call minute: 8,000 input tokens and 240 output tokens.
+
+Dev pipeline, USD per call minute:
+
+| Line | Rate | Base | High |
+|---|---|---|---|
+| STT nova-3 | 0.0048/min | 0.0048 | 0.0048 |
+| LLM gpt-6.1-terra | 1.00 in, 5.00 out /M tok | 0.0092 | 0.0092 |
+| TTS aura-2 | 30 /M chars | 0.0108 | 0.0180 |
+| Agent session | 0.01/min | 0.0100 | 0.0100 |
+| Total | | 0.0348 | 0.0420 |
+
+LLM base math: 8,000 x 1.00 / 1e6 = 0.0080, plus 240 x 5.00 / 1e6 = 0.0012.
+
+Recording pipeline (TTS swapped to cartesia/sonic-3 at 50 per M chars):
+
+| Line | Base | High |
+|---|---|---|
+| STT, LLM, session (as above) | 0.0240 | 0.0240 |
+| TTS cartesia/sonic-3 | 0.0180 | 0.0300 |
+| Total | 0.0420 | 0.0540 |
+
+So the demo costs about 0.03 to 0.05 USD per call minute. The PRD gives about
+0.036 and 0.048. Those use a cheaper LLM line (0.0030, gpt-5.4-mini) and a TTS
+line of 0.018. Our LLM default is `gpt-6.1-terra` (see Decisions).
+
+Comparison: hosted voice platforms charge about 0.07 to 0.33 USD per minute
+(PRD figure, not re-checked). This stack is cheaper per minute, but you run and
+maintain it yourself.
+
+Free-tier limits (PRD section 15, hard caps): 1,000 agent minutes, 2.50 USD
+inference credit, 50 inbound phone minutes, 5 concurrent sessions. If the credit
+covers only STT, LLM and TTS (assumption), the dev pipeline uses
+0.0248 USD per minute, so 2.50 USD lasts about 100 minutes.
+
+| Service | Cost |
+|---|---|
+| Twilio trial (not connected) | 0 |
+| Supabase free tier | 0 |
+| Braintrust free tier | 0 |
 
 ## What production would need
 
-Filled in Phase 8.
+- Concurrency and worker scaling: the demo has 5 sessions and 1 deployment. Add
+  autoscaling, load tests and per-provider rate limits.
+- Failover and provider fallback: one provider per stage today. Add fallbacks for
+  STT, LLM and TTS, plus retry and degrade rules.
+- TCPA consent capture: only a browser checkbox today. Store timestamped consent
+  per channel before any SMS or outbound call.
+- Recording consent: none today. Add a spoken or written notice, region rules and
+  a retention policy.
+- PII handling and redaction: transcripts are stored in `calls`. Redact traces and
+  logs, encrypt data, set retention, support delete on request.
+- Verified identity for web callers: form values are self-reported. Require OTP or
+  an account link before any family record opens. Apply the same rule to phone
+  callers, because caller id can be spoofed.
+- Warm transfer: a callback request is the only hand-off today. Add SIP transfer
+  to a human with context.
+- Answering machine detection for outbound: `DialPort` is a fake. Add detection,
+  calling-hours rules and an opt-out list.
+- Regression evals from production calls: scenarios are hand-written today. Build
+  new ones from real calls.
+- Secrets management: `.env` today. Use a secrets manager, rotation and
+  per-environment keys.
+- Observability alerts: metrics are local JSON. Alert on latency, failed bookings,
+  error rate and spend.
