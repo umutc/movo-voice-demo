@@ -18,5 +18,6 @@ allowBuilds:
 
 # Audit overrides (2026-11-07): moderate advisories in transitive deps, patched versions exist.
 overrides:
+  postcss: '>=8.5.23'
   glob: '>=14.0.2'
   minimatch: '>=11.0.1'
