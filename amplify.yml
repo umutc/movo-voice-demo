@@ -1,10 +1,11 @@
 # AWS Amplify Hosting build spec for the Next.js app in web/ (WEB_COMPUTE platform).
 # Monorepo format: applications[].appRoot must equal the AMPLIFY_MONOREPO_APP_ROOT env var (web).
-# Commands run with the working directory set to appRoot (no buildPath), so the install
-# steps cd to the workspace root and back. See web/README-amplify.md for sources and risks.
+# buildPath "/" runs every command from the repository root so the hoisted pnpm install lands in
+# the root node_modules that Amplify packages with the app. See web/README-amplify.md.
 version: 1
 applications:
   - appRoot: web
+    buildPath: /
     frontend:
       phases:
         preBuild:
@@ -15,19 +16,16 @@ applications:
             - corepack enable
             - corepack prepare pnpm@12.18.0 --activate
             - pnpm --version
-            # Amplify docs require node-linker=hoisted for pnpm workspaces. The repo .npmrc does
-            # not set it, so pass it on the command line (same effect for this install).
-            - cd .. && pnpm install --frozen-lockfile --config.node-linker=hoisted --filter "web..." --filter "db..." && cd web
+            # Amplify docs require node-linker=hoisted for pnpm workspaces; passed on the command line.
+            - pnpm install --frozen-lockfile --config.node-linker=hoisted --filter "web..." --filter "db..."
         build:
           commands:
             # SSR runtime only sees variables written to .env.production at build time.
-            - env | grep -E '^(LIVEKIT_|DATABASE_URL|AGENT_NAME|ALLOW_TOKEN_ROUTE|DEMO_|LK_|NEXT_PUBLIC_)' >> .env.production
-            - pnpm build
+            - cd web && env | grep -E '^(LIVEKIT_|DATABASE_URL|AGENT_NAME|ALLOW_TOKEN_ROUTE|DEMO_|LK_|NEXT_PUBLIC_)' >> .env.production && pnpm build
       artifacts:
-        baseDirectory: .next
+        baseDirectory: web/.next
         files:
           - '**/*'
       cache:
         paths:
-          - node_modules/**/*
-          - .next/cache/**/*
+          - web/.next/cache/**/*
