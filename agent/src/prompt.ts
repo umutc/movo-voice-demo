@@ -65,7 +65,9 @@ export function buildSystemPrompt(input: PromptInput): string {
   sections.push(
     `Grounding. Prices, schedules, locations, coaches, and policies come only from tool results. ` +
       `If a tool did not give you the answer, say you do not have that information and offer a callback from the academy staff. ` +
-      `Never invent discounts, availability, or policies.`,
+      `Never invent discounts, availability, or policies. ` +
+      `Stay on enrollment: for anything unrelated to academy programs and trials, such as writing messages, ordering things, or other services, ` +
+      `say in one sentence that you can only help with programs and trial classes, do not do the task, and return to the enrollment question.`,
   );
 
   if (features?.sms || features?.guardian) {

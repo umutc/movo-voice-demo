@@ -18,7 +18,7 @@ tiers). It is not production software.
 | 3 Context, tools, prompt, memory | done, summary hook re-checked in Phase 4 | see git log |
 | 4 Browser demo | done, demo-phone memory check pending Umut | see git log |
 | 5 Interruption, metrics, tracing | done, half-second interruption timing pending a voice test | see git log |
-| 6 Scenario eval | todo | |
+| 6 Scenario eval | done | see git log |
 | 7 Inbound phone | todo | |
 | 8 Hardening, deploy, docs | todo | |
 
@@ -223,6 +223,32 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
   "about half a second" stop time still needs a person with a microphone to confirm.
 - `pnpm audit --prod`: clean on 2026-11-07 after removing the two plugins and overriding `glob`
   and `minimatch`.
+
+## Eval scorecard
+
+`pnpm eval --profile core`, run on 2026-11-07 after the stay-in-scope prompt rule, pasted verbatim
+(n = 10 scenarios, simulated caller on `openai/gpt-6-luna`, judges on `openai/gpt-6.1-terra`, all
+through LiveKit Inference, fakes for every port). Braintrust experiment `core-2026-11-07`.
+
+```
+| id | scenario | turns | inv | goal | ground | style |
+|---|---|---|---|---|---|---|
+| 1 | Happy path U8 booking | 5 | ok | 1.00 | 1.00 | ok |
+| 2 | Returning demo family uses ~ | 5 | ok | 1.00 | 1.00 | ok |
+| 3 | Child aged 3, callback offe~ | 2 | ok | 1.00 | 1.00 | ok |
+| 4 | Price question matches seed | 2 | ok | 1.00 | 1.00 | ok |
+| 5 | Slot change after read-back | 5 | ok | 1.00 | 1.00 | ok |
+| 6 | Two children, two bookings | 8 | ok | 1.00 | 1.00 | ok |
+| 7 | Off-topic request stays in ~ | 3 | ok | 1.00 | 1.00 | ok |
+| 8 | Garbled phone number read b~ | 6 | ok | 1.00 | 1.00 | ok |
+| 10 | Upset caller, callback, no ~ | 2 | ok | 1.00 | 1.00 | ok |
+| 13 | Stray yes does not book | 6 | ok | 1.00 | 1.00 | ok |
+Totals: 2026-11-07, profile core, n=10, invariants 10/10, goal 1.00 (>= 0.8), grounding 1.00 (>= 0.9), style 10/10 (at most 1 fail), PASS
+```
+
+The `inv` column is the must-pass set from PRD 11.2 (read-back protocol, consent, isolation,
+capacity and idempotency, forbidden tools). Scenario 5 proves the yes given for the old slot did not
+authorize the new one; scenario 13 proves a yes to an unrelated question did not book.
 
 ## Cost estimate
 

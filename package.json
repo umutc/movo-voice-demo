@@ -19,7 +19,8 @@
     "db:migrate": "pnpm -F db migrate",
     "db:seed": "pnpm -F db seed",
     "telephony:render": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/render-telephony.ts",
-    "db:smoke": "pnpm -F db smoke"
+    "db:smoke": "pnpm -F db smoke",
+    "start": "node agent/src/agent.ts start"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

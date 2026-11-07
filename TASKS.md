@@ -83,11 +83,11 @@ Commit `phase-5: interruption check + metrics + tracing`.
 
 ## Phase 6: Scenario eval (Sunday 09:00, 150 min)
 
-- [ ] `eval/scenarios.yaml`: 13 scenarios from PRD 11.2, each tagged with a profile (`core`: 1 to 8, 10, 13; `sms`: 9; `guardian`: 11; `outbound`: 12). Only `core` is required now; the others are enabled when their feature ships.
-- [ ] `eval/simulated-caller.ts`: persona LLM, one or two sentences per turn, stops at goal or refusal.
-- [ ] `eval/run.ts`: Braintrust `Eval` with `--profile`; task runs the real prompt + real handlers over fresh fakes per scenario; records the ordered conversation timeline (user turns, assistant turns, tool calls); prefer the SDK testing API for the turn loop.
-- [ ] `eval/invariants.ts` + `eval/scorers.ts`: must-pass invariants on the timeline plus final fake DB state (booking authorized only by an affirmative user turn whose immediately preceding assistant turn is the matching read-back, with nothing in between; consent; isolation; capacity; idempotency; forbidden tools); judge and style scores computed over the selected profile; thresholds; non-zero exit on failure.
-- [ ] Verify: `pnpm eval --profile core` prints the scorecard; results in Braintrust; scenario 5 proves the old "yes" did not authorize the new slot and scenario 13 proves a stray "yes" did not either; fix prompt issues (first passing run is enough if time is short). AC-5.
+- [x] `eval/scenarios.yaml`: 13 scenarios from PRD 11.2, each tagged with a profile (`core`: 1 to 8, 10, 13; `sms`: 9; `guardian`: 11; `outbound`: 12). Only `core` is required now; the others are enabled when their feature ships.
+- [x] `eval/simulated-caller.ts`: persona LLM, one or two sentences per turn, stops at goal or refusal.
+- [x] `eval/run.ts`: Braintrust `Eval` with `--profile`; task runs the real prompt + real handlers over fresh fakes per scenario; records the ordered conversation timeline (user turns, assistant turns, tool calls); prefer the SDK testing API for the turn loop.
+- [x] `eval/invariants.ts` + `eval/scorers.ts`: must-pass invariants on the timeline plus final fake DB state (booking authorized only by an affirmative user turn whose immediately preceding assistant turn is the matching read-back, with nothing in between; consent; isolation; capacity; idempotency; forbidden tools); judge and style scores computed over the selected profile; thresholds; non-zero exit on failure.
+- [x] Verify: `pnpm eval --profile core` prints the scorecard; results in Braintrust; scenario 5 proves the old "yes" did not authorize the new slot and scenario 13 proves a stray "yes" did not either; fix prompt issues (first passing run is enough if time is short). AC-5. (2026-11-07: two full core runs; the second, after the stay-in-scope prompt rule, scored invariants 10/10, goal 1.00, grounding 1.00, style 10/10; experiment core-2026-11-07 in Braintrust; scorecard pasted in README)
 
 Commit `phase-6: scenario eval + invariants`.
 

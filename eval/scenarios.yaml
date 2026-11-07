@@ -1,0 +1,186 @@
+# Scenario eval inputs (PRD 11.2). All personas are synthetic.
+# identity: sip-demo | sip-new | browser-anon | browser-demo | browser-real-phone (same meaning as agent/test/helpers.ts)
+# variant: inbound (default) | follow_up (browser-demo identity with jobMetadata reason follow_up)
+# script: ordered user lines that override the simulated caller.
+#   when: start          first user turn
+#   when: after_readback only after a fresh read-back is the last assistant turn (the simulated caller drives until then)
+#   when: next           the next user turn, unconditionally
+# expected.booking true: at least one booking; false: none. expected.callback true: at least one callback request.
+# Scenario 6 expects two bookings (see its goal); the booking flag only requires at least one.
+
+- id: 1
+  profile: core
+  title: Happy path U8 booking
+  identity: sip-new
+  persona: >
+    You are Jordan Reyes, a parent. Your daughter Sofia is seven years old and has never played organized soccer.
+    You live near Prospect Park and want a free trial class. You are friendly and brief. You prefer weekend slots, so pick the Saturday one if it is offered.
+  goal: Book one free trial class for Sofia in the program that fits a seven year old, and hear the booking confirmed.
+  maxTurns: 10
+  forbiddenTools: []
+  expected: { booking: true, callback: false }
+
+- id: 2
+  profile: core
+  title: Returning demo family uses memory
+  identity: sip-demo
+  persona: >
+    You are Jordan, calling back after a first call a few days ago about your daughter Emma, age seven, and the Saturday program at Prospect Park.
+    You talked it over with your partner and now want to book the trial. You expect the assistant to remember you. Do not repeat Emma's age or the program unless asked; let the assistant bring it up.
+  goal: Book the free trial class for Emma on a Saturday, after the assistant shows it remembers the earlier conversation.
+  maxTurns: 10
+  forbiddenTools: []
+  expected: { booking: true, callback: false }
+
+- id: 3
+  profile: core
+  title: Child aged 3, callback offered
+  identity: browser-anon
+  persona: >
+    You are Morgan Ellis, a parent. Your son Theo just turned three and you would love to enroll him in soccer.
+    If the assistant says there is no program for his age, ask whether the staff could call you back about future options, and accept a callback if offered. Your phone number is the one you are calling from.
+  goal: Learn whether a program exists for a three year old and, if not, get a callback request from the academy staff.
+  maxTurns: 8
+  forbiddenTools: [book_trial_class, propose_booking]
+  expected: { booking: false, callback: true }
+
+- id: 4
+  profile: core
+  title: Price question matches seed
+  identity: browser-anon
+  persona: >
+    You are Riley Chen, a parent. Your daughter Ava is nine. Before anything else you want to know the monthly price of the program she would be in, and where and when it meets.
+    You are not ready to book today; once you have the price, location and days, thank the assistant and say you will think about it.
+  goal: Get the exact monthly price, location and days for the program for a nine year old, without booking.
+  maxTurns: 8
+  forbiddenTools: [book_trial_class, propose_booking]
+  expected: { booking: false, callback: false }
+
+- id: 5
+  profile: core
+  title: Slot change after read-back
+  identity: sip-new
+  persona: >
+    You are Dana Whitfield, a parent. Your son Theo is six. You want a free trial class and you are flexible on the day.
+    After you hear a read-back of the first slot, you change your mind and ask for the second slot instead.
+  goal: End up with exactly one booking for Theo in the second slot the assistant offered, confirmed only after a fresh read-back of that new slot.
+  maxTurns: 12
+  forbiddenTools: []
+  expected: { booking: true, callback: false }
+  script:
+    - when: start
+      say: Hi, I'm Dana. My son Theo is six and I'd like to book a free trial class.
+    - when: after_readback
+      say: Actually, can we switch to the second slot you mentioned instead?
+    - when: after_readback
+      say: Yes, please book that one.
+
+- id: 6
+  profile: core
+  title: Two children, two bookings
+  identity: sip-new
+  persona: >
+    You are Casey Morgan, a parent with two children: Leo, age seven, and Mia, age ten. You want a free trial class for each of them, in their own age-appropriate programs.
+    In your first line say you want trial classes for both children and give both names and ages. Work through one child at a time: accept the first program offered and pick the first slot offered, so each child takes as few turns as possible.
+    Keep the children straight and never mix up their names, ages or programs.
+  goal: Book two separate trial classes, one for Leo in his program and one for Mia in her program, each confirmed on its own read-back.
+  maxTurns: 12
+  forbiddenTools: []
+  expected: { booking: true, callback: false }
+
+- id: 7
+  profile: core
+  title: Off-topic request stays in scope
+  identity: browser-anon
+  persona: >
+    You are Sam Patel. You start by asking the assistant to recommend a good pizza place near the park and to help you write a birthday message for your nephew.
+    If the assistant steers you back to soccer, say your daughter Lily is eight and ask what program she could join, then say you will think about it and thank the assistant.
+  goal: Test that the assistant politely declines the off-topic requests and stays on academy enrollment, then answers the soccer question.
+  maxTurns: 8
+  forbiddenTools: [book_trial_class]
+  expected: { booking: false, callback: false }
+
+- id: 8
+  profile: core
+  title: Garbled phone number read back
+  identity: browser-anon
+  persona: >
+    You are Alex Brooks, a parent. You want the academy staff to call you back about registration for next season. You are on a bad connection.
+    Your number is seven one eight, five five five, zero one four two. Your first attempt is garbled: you say seven one eight five five five, then something unclear, then four two.
+    If the assistant reads back a number that is wrong or incomplete, correct it and say the full number clearly. When the assistant reads the full correct number back, confirm it.
+  goal: Get a callback request logged with the full, correct phone number (seven one eight, five five five, zero one four two) after the assistant checks it back with you.
+  maxTurns: 10
+  forbiddenTools: [book_trial_class, propose_booking]
+  expected: { booking: false, callback: true }
+  script:
+    - when: start
+      say: Hi, can someone call me back about registration for next season? My number is seven one eight, five five five, uh, something, four two.
+
+- id: 10
+  profile: core
+  title: Upset caller, callback, no promises
+  identity: sip-new
+  persona: >
+    You are Pat Nolan, a very upset parent. Your son came to a class last month and you say the coach was rude and the session ended early. You demand a full refund today and a written guarantee that it will never happen again.
+    Push for a promise at least twice. Accept a callback from the staff if offered, then say goodbye.
+  goal: Voice the complaint and demand a refund, and end with a callback request logged, with no refund, discount or guarantee promised by the assistant.
+  maxTurns: 10
+  forbiddenTools: [book_trial_class, propose_booking]
+  expected: { booking: false, callback: true }
+
+- id: 9
+  profile: sms
+  title: Declines SMS, no SMS tool call
+  identity: sip-new
+  persona: >
+    You are Jordan Reyes, a parent. Your daughter Sofia is seven. You want a free trial class and will book the Saturday slot.
+    After the booking, if you are offered a text message confirmation, say no thanks.
+  goal: Book one trial class and decline the text confirmation so that no SMS is sent.
+  maxTurns: 12
+  forbiddenTools: [send_sms_confirmation]
+  expected: { booking: true, callback: false }
+
+- id: 11
+  profile: guardian
+  title: Second guardian
+  identity: sip-demo
+  persona: >
+    You are Jordan, the primary guardian of Emma, age seven. You book the Saturday trial class. After booking, when offered, you ask to add your partner Taylor Demo as a second guardian with the email taylor.demo@example.com, and confirm when asked.
+  goal: Book the trial class, then add Taylor Demo as a second guardian after a clear yes.
+  maxTurns: 12
+  forbiddenTools: []
+  expected: { booking: true, callback: false }
+
+- id: 12
+  profile: outbound
+  title: Outbound follow-up persona
+  identity: browser-demo
+  variant: follow_up
+  persona: >
+    You are Jordan, who called the academy a few days ago about Emma, age seven, and Juniors U8. You picked up a follow-up call from the academy.
+    It is a good time to talk. You are happy to book a Saturday trial class for Emma when offered two slots.
+  goal: Take the follow-up call and book a trial class for Emma after a read-back and a clear yes.
+  maxTurns: 10
+  forbiddenTools: []
+  expected: { booking: true, callback: false }
+
+- id: 13
+  profile: core
+  title: Stray yes does not book
+  identity: sip-new
+  persona: >
+    You are Priya Nair, a parent. Your daughter Zoe is eight and you want a free trial class. After the read-back you raise a side question about parking.
+    You are cautious: after parking is dealt with, you want to check with your partner and do not want to book today unless the assistant explicitly reads the booking back to you again and you decide it is fine.
+    Once the assistant has dealt with that, say you will call back later and thank the assistant.
+  goal: >
+    Show that a yes to an unrelated question does not book anything. No booking happens until a fresh read-back gets its own clear yes.
+  maxTurns: 12
+  forbiddenTools: []
+  expected: { booking: false, callback: false }
+  script:
+    - when: start
+      say: Hi, I'm Priya. My daughter Zoe is eight and I'd like to book a free trial class.
+    - when: after_readback
+      say: Wait, is parking free there?
+    - when: next
+      say: Yes.
