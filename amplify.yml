@@ -23,9 +23,10 @@ applications:
             # SSR runtime only sees variables written to .env.production at build time.
             - cd "$(git rev-parse --show-toplevel)/web" && pwd && env | grep -E '^(LIVEKIT_|DATABASE_URL|AGENT_NAME|ALLOW_TOKEN_ROUTE|DEMO_|LK_|NEXT_PUBLIC_)' >> .env.production && pnpm build
       artifacts:
-        baseDirectory: web/.next
+        # buildPath / is the parent of the checkout (CODEBUILD_SRC_DIR); the repo sits in movo-voice-demo/.
+        baseDirectory: movo-voice-demo/web/.next
         files:
           - '**/*'
       cache:
         paths:
-          - web/.next/cache/**/*
+          - movo-voice-demo/web/.next/cache/**/*
