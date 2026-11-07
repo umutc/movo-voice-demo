@@ -14,12 +14,12 @@ Status legend: `[ ]` todo, `[x]` done and verified, `[~]` reported by human, not
 
 Reported by human (mark `[~]`), verified by agent (mark `[x]` after the Verify command passes without printing secrets):
 
-- [ ] `[MANUAL]` LiveKit Cloud project `movo-voice-demo`, Build plan, recordings and insights enabled. Verify: `lk project list` shows it; a token can be minted with the server SDK.
-- [ ] `[MANUAL]` `brew install livekit-cli`, `lk cloud auth`. Verify: `lk project list`.
-- [ ] `[MANUAL]` Supabase project (free): pooler URL in `DATABASE_URL`, direct URL in `DIRECT_DATABASE_URL`. Verify: `select 1` through both. For `TEST_DATABASE_URL` either a separate schema on the same project (set `search_path`) or a local Postgres container; the agent may set this up itself.
+- [~] `[MANUAL]` LiveKit Cloud project `movo-voice-demo`, Build plan, recordings and insights enabled. Verify: `lk project list` shows it; a token can be minted with the server SDK. (2026-11-07: `lk project list` shows it; token mint and the recordings/insights toggles not yet verified)
+- [x] `[MANUAL]` `brew install livekit-cli`, `lk cloud auth`. Verify: `lk project list`. (2026-11-07: lk 2.19.3, project listed, LIVEKIT_* copied from the CLI config into .env)
+- [~] `[MANUAL]` Supabase project (free): pooler URL in `DATABASE_URL`, direct URL in `DIRECT_DATABASE_URL`. Verify: `select 1` through both. (2026-11-07: project created via MCP, password reset via browser, URLs in .env, schema `test` created; direct host is IPv6-only so `DIRECT_DATABASE_URL` points at the session pooler; `select 1` runs in Phase 1 once postgres.js is installed) For `TEST_DATABASE_URL` either a separate schema on the same project (set `search_path`) or a local Postgres container; the agent may set this up itself.
 - [ ] `[MANUAL]` Braintrust account, project `movo-voice-demo`, `BRAINTRUST_API_KEY`. Verify: log one test span.
 - [ ] `[MANUAL]` `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` for eval judge and simulated caller. Verify: one tiny completion.
-- [ ] Node 24 LTS and pnpm 12 via mise: after Phase 1 creates `mise.toml`, run `mise install` in the repo (until then `mise use -g node@24 pnpm@12` is fine). Verify: `mise current` shows node 24.x and pnpm 12.x; `node -v`, `pnpm -v`.
+- [x] Node 24 LTS and pnpm 12 via mise: after Phase 1 creates `mise.toml`, run `mise install` in the repo (until then `mise use -g node@24 pnpm@12` is fine). Verify: `mise current` shows node 24.x and pnpm 12.x; `node -v`, `pnpm -v`. (2026-11-07: node 24.22.1, pnpm 12.18.0)
 - [ ] (Only for Phase 9 / stretch) `[MANUAL]` Twilio trial, both demo phones as Verified Caller IDs, trial number, SID, auth token. Not required for core.
 
 Done when: `.env` has every core variable from `.env.example`; feature flags default false.
