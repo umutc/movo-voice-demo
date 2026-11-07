@@ -93,8 +93,8 @@ Commit `phase-6: scenario eval + invariants`.
 
 ## Phase 7: Inbound phone (Sunday 12:00, 60 min)
 
-- [ ] `lk number search --country-code US --area-code 718` (or 347, 929); `lk number purchase --numbers +1...` (first number free).
-- [ ] Render `telephony/dispatch-rule.template.json` -> `telephony/out/` (gitignored); `lk sip dispatch create --config ...`; `lk number update --id <number_id> --sip-dispatch-rule-id <rule_id>`.
+- [x] `lk number search --country-code US --area-code 718` (or 347, 929); `lk number purchase --numbers +1...` (first number free). (2026-11-07: no 718 or 347 inventory; purchased +1 929 428 8103, PN_PPN_RRYyfgL5NYYG)
+- [x] Render `telephony/dispatch-rule.template.json` -> `telephony/out/` (gitignored); `lk sip dispatch create --config ...`; `lk number update --id <number_id> --sip-dispatch-rule-id <rule_id>`. (2026-11-07: rule SDR_ibvm4ZNXvrBy created from the rendered file; `lk number update` and the raw API returned invalid_argument, Umut assigned the rule in the dashboard; `lk number list` now shows it)
 - [ ] Confirm the participant kind is SIP and `sip.phoneNumber` arrives; identity source recorded as `caller_id_only`; memory works for a synthetic family created by an earlier phone call.
 - [ ] Verify: both demo phones call, each completes a booking; second call from the same phone is recognized. AC-6.
 
