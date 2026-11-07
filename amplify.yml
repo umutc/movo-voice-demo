@@ -27,6 +27,3 @@ applications:
         baseDirectory: movo-voice-demo/web/.next
         files:
           - '**/*'
-      cache:
-        paths:
-          - movo-voice-demo/web/.next/cache/**/*
