@@ -16,15 +16,15 @@ applications:
             - corepack enable
             - corepack prepare pnpm@12.18.0 --activate
             - pnpm --version
-            # Amplify docs require node-linker=hoisted for pnpm workspaces. The CLI flag was ignored on
-            # the build image, so the setting is appended to .npmrc for this build only (not committed).
-            - cd "$(git rev-parse --show-toplevel)" && pwd && echo "node-linker=hoisted" >> .npmrc && pnpm install --frozen-lockfile --filter "web..." --filter "db..." && ls node_modules/next/package.json
+            # Amplify needs a flat node_modules. pnpm 12 reads the linker setting from
+            # pnpm-workspace.yaml (nodeLinker), not .npmrc; appended for this build only (not committed).
+            - cd "$(git rev-parse --show-toplevel)" && pwd && printf '\nnodeLinker: hoisted\n' >> pnpm-workspace.yaml && pnpm install --frozen-lockfile --filter "web..." --filter "db..." && ls node_modules/next/package.json
         build:
           commands:
             # SSR runtime only sees variables written to .env.production at build time.
             - cd "$(git rev-parse --show-toplevel)/web" && pwd && env | grep -E '^(LIVEKIT_|DATABASE_URL|AGENT_NAME|ALLOW_TOKEN_ROUTE|DEMO_|LK_|NEXT_PUBLIC_)' >> .env.production && pnpm build
             # Amplify packages web/node_modules at deploy time; the hoisted install lives at the root, so copy it in.
-            - cd "$(git rev-parse --show-toplevel)" && rm -rf web/node_modules && cp -a node_modules web/node_modules && ls web/node_modules/next/package.json
+            - cd "$(git rev-parse --show-toplevel)" && rm -rf web/node_modules && cp -a node_modules web/node_modules && rm -rf web/node_modules/db && cp -a db web/node_modules/db && ls web/node_modules/next/package.json
       artifacts:
         # Resolved relative to appRoot even with buildPath set.
         baseDirectory: .next
