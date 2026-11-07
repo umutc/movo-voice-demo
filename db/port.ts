@@ -93,6 +93,22 @@ export type BookTrialResult =
   | { ok: true; booking: Booking; created: boolean; slot: TrialSlot; program: Program; child: Child }
   | { ok: false; reason: 'slot_full' | 'slot_not_found' | 'program_mismatch' | 'child_not_found' };
 
+export type DemoChannel = 'web' | 'phone';
+
+/**
+ * Admission request for one demo call. A limit of null, undefined or 0 is off. Counting uses the
+ * UTC day of `now`; the per-IP limit applies only when `ipHash` is set.
+ */
+export interface DemoUsageRequest {
+  channel: DemoChannel;
+  now: Date;
+  ipHash?: string | null;
+  globalLimit?: number | null;
+  ipLimit?: number | null;
+}
+
+export type DemoUsageResult = { ok: true; id: string } | { ok: false; reason: 'global_limit' | 'ip_limit' };
+
 export interface FamilyWithDetails extends Family {
   children: Child[];
   lastBooking: (Booking & { slot: TrialSlot; program: Program; child: Child }) | null;
@@ -144,4 +160,8 @@ export interface DbPort {
     },
   ): Promise<void>;
   getCall(callId: string): Promise<CallRecord | null>;
+  /** Checks today's demo counts and records the call in one atomic step; refuses at a limit. */
+  reserveDemoUsage(input: DemoUsageRequest): Promise<DemoUsageResult>;
+  /** Demo calls since the start of the UTC day of `now`, optionally for one IP hash. */
+  countDemoUsage(input: { now: Date; ipHash?: string | null }): Promise<number>;
 }

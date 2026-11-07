@@ -22,6 +22,7 @@ export function App({ agentName, phoneNumber, personaName, pipeline }: AppProps)
   const [view, setView] = useState<View>('form');
   const [form, setForm] = useState<FormValues>({ guardianName: '', phone: '', email: '', consent: false });
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [final, setFinal] = useState<{ snapshot: StateSnapshot | null; transcript: TranscriptLine[]; seconds: number } | null>(null);
 
@@ -42,6 +43,7 @@ export function App({ agentName, phoneNumber, personaName, pipeline }: AppProps)
   const start = async (values: FormValues) => {
     setForm(values);
     setError(null);
+    setNotice(null);
     setStarting(true);
     try {
       // The session reads the latest options on start; give React one tick to commit them.
@@ -58,6 +60,11 @@ export function App({ agentName, phoneNumber, personaName, pipeline }: AppProps)
       }
       setView('call');
     } catch (err) {
+      // The token route answers 429 { error: 'daily_limit' } once today's demo calls are used up.
+      if (err instanceof Error && err.message.includes(' received 429 ')) {
+        setNotice("Today's demo limit is reached. Try again tomorrow.");
+        return;
+      }
       setError(err instanceof Error ? err.message.replace(/^Error generating token from endpoint [^:]+: received \d+ \/ /, '') : 'Could not start the call');
     } finally {
       setStarting(false);
@@ -66,7 +73,7 @@ export function App({ agentName, phoneNumber, personaName, pipeline }: AppProps)
 
   return (
     <SessionProvider session={session}>
-      {view === 'form' && <PreCallForm phoneNumber={phoneNumber} personaName={personaName} onStart={start} error={error} starting={starting} />}
+      {view === 'form' && <PreCallForm phoneNumber={phoneNumber} personaName={personaName} onStart={start} error={error} notice={notice} starting={starting} />}
       {view === 'call' && (
         <CallView
           personaName={personaName}

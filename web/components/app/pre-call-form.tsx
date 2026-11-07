@@ -9,10 +9,11 @@ interface Props {
   personaName: string;
   onStart: (values: FormValues) => Promise<void>;
   error: string | null;
+  notice: string | null;
   starting: boolean;
 }
 
-export function PreCallForm({ phoneNumber, personaName, onStart, error, starting }: Props) {
+export function PreCallForm({ phoneNumber, personaName, onStart, error, notice, starting }: Props) {
   const [values, setValues] = useState<FormValues>({ guardianName: '', phone: '', email: '', consent: false });
   const canStart = values.guardianName.trim().length >= 2 && values.consent && !starting;
 
@@ -124,6 +125,11 @@ export function PreCallForm({ phoneNumber, personaName, onStart, error, starting
             {error && (
               <p className="m-0 flex items-center gap-2 text-[13px] text-danger">
                 <span className="dot dot-danger" /> {error}
+              </p>
+            )}
+            {notice && (
+              <p role="status" className="m-0 flex items-center gap-2 text-[13px] text-text-secondary">
+                <span className="dot dot-warning" /> {notice}
               </p>
             )}
             <button type="submit" className="btn-primary" disabled={!canStart}>

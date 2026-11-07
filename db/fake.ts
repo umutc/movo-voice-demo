@@ -7,6 +7,9 @@ import type {
   CallRecord,
   Child,
   DbPort,
+  DemoChannel,
+  DemoUsageRequest,
+  DemoUsageResult,
   Family,
   FamilyWithDetails,
   Guardian,
@@ -14,6 +17,14 @@ import type {
   TrialSlot,
 } from './port.ts';
 import { DEMO_FAMILY, PROGRAMS, generateSlots } from './seed-data.ts';
+import { decideDemoUsage, utcDayStart } from './usage.ts';
+
+export interface DemoUsageRow {
+  id: string;
+  channel: DemoChannel;
+  ipHash: string | null;
+  createdAt: Date;
+}
 
 export function normalizeName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -33,6 +44,7 @@ export class FakeDb implements DbPort {
   bookings = new Map<string, Booking>();
   calls = new Map<string, CallRecord>();
   callbacks = new Map<string, CallbackRequest>();
+  demoUsage: DemoUsageRow[] = [];
   private seq = 0;
   private readonly opts: FakeDbOptions;
 
@@ -55,6 +67,7 @@ export class FakeDb implements DbPort {
     this.bookings.clear();
     this.calls.clear();
     this.callbacks.clear();
+    this.demoUsage = [];
     this.seq = 0;
     const now = this.opts.now ?? new Date();
     for (const p of PROGRAMS) this.programs.set(p.id, { ...p });
@@ -293,5 +306,24 @@ export class FakeDb implements DbPort {
   async getCall(callId: string): Promise<CallRecord | null> {
     const c = this.calls.get(callId);
     return c ? { ...c } : null;
+  }
+
+  async countDemoUsage(input: { now: Date; ipHash?: string | null }): Promise<number> {
+    const since = utcDayStart(input.now).getTime();
+    return this.demoUsage.filter((r) => r.createdAt.getTime() >= since && (input.ipHash ? r.ipHash === input.ipHash : true)).length;
+  }
+
+  // Synchronous between the counts and the push, so concurrent calls cannot overshoot a limit.
+  async reserveDemoUsage(input: DemoUsageRequest): Promise<DemoUsageResult> {
+    const since = utcDayStart(input.now).getTime();
+    const today = this.demoUsage.filter((r) => r.createdAt.getTime() >= since);
+    const refused = decideDemoUsage(input, {
+      global: today.length,
+      ip: input.ipHash ? today.filter((r) => r.ipHash === input.ipHash).length : 0,
+    });
+    if (refused) return refused;
+    const row: DemoUsageRow = { id: this.nextId('usage'), channel: input.channel, ipHash: input.ipHash ?? null, createdAt: input.now };
+    this.demoUsage.push(row);
+    return { ok: true, id: row.id };
   }
 }

@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { openDb } from 'db';
 import { loadConfig, splitTtsModel } from './config.ts';
 import { ATTR, PARTICIPANT_KIND_SIP, resolveIdentity, SessionContext } from './context.ts';
+import { admitPhoneCall, buildClosedLineAgent, startCallTimer } from './limits.ts';
 import { closeCall, makeLlmAffirmationJudge, openCall } from './memory.ts';
 import { attachMetrics } from './metrics.ts';
 import { FakeDialPort, FakeSmsPort } from './ports/index.ts';
@@ -68,19 +69,29 @@ export default defineAgent({
       features: { sms: cfg.FEATURE_SMS, guardian: false },
       roomName: ctx.room.name ?? 'unknown',
     });
-    await sc.bindFamily();
-    await openCall(sc, direction);
-    tracing?.startCall(sc);
+    // Daily demo cap for phone calls. Browser calls were counted by the web token route, so only
+    // real SIP participants are checked here. A refused call gets one sentence and no call row.
+    const admission =
+      participant?.kind === PARTICIPANT_KIND_SIP ? await admitPhoneCall(db, cfg.DEMO_LIMIT_GLOBAL_PER_DAY, sc.now()) : { admitted: true };
+    if (admission.admitted) {
+      await sc.bindFamily();
+      await openCall(sc, direction);
+      tracing?.startCall(sc);
+    } else {
+      logger.warn({ error: admission.error ?? null }, 'phone call refused: daily demo limit');
+    }
     logger.info(
       { identitySource: identity.source, hasPhone: Boolean(identity.phone), familyBound: Boolean(sc.familyId), history: sc.familyHasHistory, callId: sc.callId },
       'session identity resolved',
     );
 
-    const agent = buildEnrollmentAgent(sc, {
-      academyName: cfg.DEMO_ACADEMY_NAME,
-      personaName: cfg.DEMO_AGENT_PERSONA_NAME,
-      variant: identity.reason === 'follow_up' ? 'follow_up' : 'inbound',
-    });
+    const agent = admission.admitted
+      ? buildEnrollmentAgent(sc, {
+          academyName: cfg.DEMO_ACADEMY_NAME,
+          personaName: cfg.DEMO_AGENT_PERSONA_NAME,
+          variant: identity.reason === 'follow_up' ? 'follow_up' : 'inbound',
+        })
+      : buildClosedLineAgent();
 
     const tts = splitTtsModel(cfg.LK_TTS_MODEL);
     const session = new AgentSession<SessionContext>({
@@ -137,7 +148,10 @@ export default defineAgent({
       return finalized;
     };
     finalizers.set(ctx, finalize);
+    // Max call length timer, started once the session runs, cleared on close.
+    let stopCallTimer: () => void = () => {};
     session.on(AgentSessionEventTypes.Close, (ev) => {
+      stopCallTimer();
       logger.info({ reason: ev.reason, room: ctx.room.name }, 'session closed');
       state.ended = true;
       state.push(sc);
@@ -153,6 +167,13 @@ export default defineAgent({
     // deleteRoomOnClose: the browser sees the room go away when the agent hangs up (end_call).
     await session.start({ agent, room: ctx.room, inputOptions: { deleteRoomOnClose: true } });
     state.push(sc);
+    // At DEMO_MAX_CALL_SECONDS: a short goodbye, then the same drain shutdown end_call uses, so
+    // the Close handler and finalize() run as for any other call end.
+    if (!state.ended) {
+      stopCallTimer = startCallTimer(session, cfg.DEMO_MAX_CALL_SECONDS, () => {
+        logger.info({ maxSeconds: cfg.DEMO_MAX_CALL_SECONDS }, 'max call length reached, ending the call');
+      });
+    }
   },
 });
 

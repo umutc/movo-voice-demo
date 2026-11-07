@@ -1,6 +1,6 @@
 // Real DbPort adapter: Drizzle ORM over postgres.js. Booking semantics per PRD section 8 are
 // enforced inside one transaction with a row lock on the slot.
-import { and, asc, desc, eq, gt, lte, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, gte, lte, sql } from 'drizzle-orm';
 import { createDb, type Db } from './client.ts';
 import type {
   Booking,
@@ -9,13 +9,16 @@ import type {
   CallRecord,
   Child,
   DbPort,
+  DemoUsageRequest,
+  DemoUsageResult,
   Family,
   FamilyWithDetails,
   Guardian,
   Program,
   TrialSlot,
 } from './port.ts';
-import { bookings, callbackRequests, calls, children, families, guardians, programs, trialSlots } from './schema.ts';
+import { bookings, callbackRequests, calls, children, demoUsage, families, guardians, programs, trialSlots } from './schema.ts';
+import { decideDemoUsage, limitOn, utcDayStart } from './usage.ts';
 
 export type { DbPort } from './port.ts';
 export { createDb } from './client.ts';
@@ -292,6 +295,42 @@ export class DrizzleDb implements DbPort {
     const rows = await this.db.select().from(calls).where(eq(calls.id, callId)).limit(1);
     const row = rows[0];
     return row ? rowToCall(row) : null;
+  }
+
+  async countDemoUsage(input: { now: Date; ipHash?: string | null }): Promise<number> {
+    const since = gte(demoUsage.createdAt, utcDayStart(input.now));
+    const [row] = await this.db
+      .select({ n: count() })
+      .from(demoUsage)
+      .where(input.ipHash ? and(since, eq(demoUsage.ipHash, input.ipHash)) : since);
+    return row?.n ?? 0;
+  }
+
+  // One transaction behind a transaction-scoped advisory lock: concurrent admissions run the
+  // count-then-insert one at a time, so a limit cannot be overshot. Works through the pooler.
+  async reserveDemoUsage(input: DemoUsageRequest): Promise<DemoUsageResult> {
+    return this.db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext('demo_usage'))`);
+      const since = gte(demoUsage.createdAt, utcDayStart(input.now));
+      let global = 0;
+      let ip = 0;
+      if (limitOn(input.globalLimit)) {
+        const [row] = await tx.select({ n: count() }).from(demoUsage).where(since);
+        global = row?.n ?? 0;
+      }
+      if (input.ipHash && limitOn(input.ipLimit)) {
+        const [row] = await tx.select({ n: count() }).from(demoUsage).where(and(since, eq(demoUsage.ipHash, input.ipHash)));
+        ip = row?.n ?? 0;
+      }
+      const refused = decideDemoUsage(input, { global, ip });
+      if (refused) return refused;
+      const [row] = await tx
+        .insert(demoUsage)
+        .values({ channel: input.channel, ipHash: input.ipHash ?? null, createdAt: input.now })
+        .returning({ id: demoUsage.id });
+      if (!row) throw new Error('insert demo_usage returned no row');
+      return { ok: true, id: row.id } as const;
+    });
   }
 }
 

@@ -121,3 +121,16 @@ export const callbackRequests = pgTable('callback_requests', {
   preferredTime: text('preferred_time'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+// One row per admitted demo call (browser token minted or phone call answered). Counted per UTC
+// day to cap spend on the public demo. `ip_hash` is an HMAC of the client IP, never the raw IP.
+export const demoUsage = pgTable(
+  'demo_usage',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    channel: text('channel').notNull(),
+    ipHash: text('ip_hash'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('demo_usage_created_idx').on(t.createdAt), index('demo_usage_ip_created_idx').on(t.ipHash, t.createdAt)],
+).enableRLS();

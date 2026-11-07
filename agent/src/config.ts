@@ -51,6 +51,11 @@ const baseSchema = z.object({
   DEMO_AGENT_PERSONA_NAME: z.string().min(1).default('Maya'),
   DEMO_RETURNING_PHONE: e164.optional(),
   DEMO_SECOND_PHONE: e164.optional(),
+
+  // Spend guard for the public demo. Unset or 0 means no daily cap (local development).
+  DEMO_LIMIT_GLOBAL_PER_DAY: z.coerce.number().int().min(0).optional(),
+  // Hard cap on one call. 0 turns the timer off.
+  DEMO_MAX_CALL_SECONDS: z.coerce.number().int().min(0).default(180),
 });
 
 export type Config = z.infer<typeof baseSchema>;

@@ -1,4 +1,7 @@
+import { createHmac } from 'node:crypto';
 import { NextResponse } from 'next/server';
+import { openDb } from 'db';
+import { clientIpFromForwardedFor, limitOn } from 'db/usage';
 import { AccessToken, RoomAgentDispatch, RoomConfiguration, type VideoGrant } from 'livekit-server-sdk';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { z } from 'zod';
@@ -29,16 +32,55 @@ const requestSchema = z.object({
 export const revalidate = 0;
 
 // Abuse limiting, not authentication: a browser on another site cannot mint tokens, and each token
-// is short-lived and bound to a two-participant room (one caller plus the agent).
-const SITE_ORIGINS = ['https://movo-voice-demo.umutcelik.com.tr', 'https://main.dall2asqwbqvd.amplifyapp.com'];
-
+// is short-lived and bound to a two-participant room (one caller plus the agent). Allowed origins
+// come from ALLOWED_ORIGINS (comma-separated); localhost is added outside production.
 function allowedOrigins(): Set<string> {
-  const extra = (process.env.ALLOWED_ORIGINS ?? '')
+  const configured = (process.env.ALLOWED_ORIGINS ?? '')
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
   const dev = process.env.NODE_ENV !== 'production' ? ['http://localhost:3000'] : [];
-  return new Set([...SITE_ORIGINS, ...dev, ...extra]);
+  return new Set([...configured, ...dev]);
+}
+
+// Daily demo caps (spend guard). Unset or 0 means no limit, so local development needs nothing.
+const limitValue = z.preprocess((v) => (typeof v === 'string' && v.trim() === '' ? undefined : v), z.coerce.number().int().min(0).optional());
+const limitsSchema = z.object({
+  DEMO_LIMIT_PER_IP_PER_DAY: limitValue,
+  DEMO_LIMIT_GLOBAL_PER_DAY: limitValue,
+});
+
+/** HMAC-SHA256 of the client IP keyed with the LiveKit secret; the raw IP is never stored. */
+function hashIp(ip: string, secret: string): string {
+  return createHmac('sha256', secret).update(ip).digest('hex');
+}
+
+/** Checks today's caps and records this call. Returns a response when the request must stop. */
+async function admitWebCall(req: Request, secret: string): Promise<NextResponse | null> {
+  const parsed = limitsSchema.safeParse(process.env);
+  if (!parsed.success) return new NextResponse('demo limit environment is invalid', { status: 500 });
+  const { DEMO_LIMIT_PER_IP_PER_DAY: ipLimit, DEMO_LIMIT_GLOBAL_PER_DAY: globalLimit } = parsed.data;
+  if (!limitOn(ipLimit) && !limitOn(globalLimit)) return null;
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) return new NextResponse('database is not configured', { status: 500 });
+  const ip = clientIpFromForwardedFor(req.headers.get('x-forwarded-for'));
+  const { port, close } = openDb(dbUrl);
+  try {
+    const result = await port.reserveDemoUsage({
+      channel: 'web',
+      now: new Date(),
+      ipHash: ip ? hashIp(ip, secret) : null,
+      ipLimit: ipLimit ?? null,
+      globalLimit: globalLimit ?? null,
+    });
+    if (!result.ok) return NextResponse.json({ error: 'daily_limit' }, { status: 429, headers: { 'Cache-Control': 'no-store' } });
+    return null;
+  } catch {
+    // Fail closed: without a working count the cap cannot hold.
+    return new NextResponse('usage check failed', { status: 503 });
+  } finally {
+    await close();
+  }
 }
 
 function requestOrigin(req: Request): string | null {
@@ -86,6 +128,9 @@ export async function POST(req: Request) {
   };
   if (phone) attributes[ATTR.phone] = phone.number;
   if (form[ATTR.email]) attributes[ATTR.email] = form[ATTR.email];
+
+  const refused = await admitWebCall(req, apiSecret);
+  if (refused) return refused;
 
   const suffix = Math.random().toString(36).slice(2, 8);
   const roomName = `web-${suffix}`;
