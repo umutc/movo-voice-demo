@@ -14,10 +14,11 @@ export const bookTrialClass = tool({
   }),
   execute: async ({ program_id, slot_id, child_name }, { ctx }) => {
     const sc = ctx.userData as SessionContext;
+    const startedAt = Date.now();
     await sc.proposals.settle();
     const refusal = sc.proposals.authorize({ programId: program_id, slotId: slot_id, childName: child_name });
     if (refusal) {
-      sc.logTool('book_trial_class', false, `refused: ${refusal}`);
+      sc.logTool('book_trial_class', false, `refused: ${refusal}`, startedAt);
       return { sayThis: `${SORRY} ${refusal.charAt(0).toLowerCase()}${refusal.slice(1)}`, booked: false };
     }
     const proposal = sc.proposals.current!;
@@ -33,7 +34,7 @@ export const bookTrialClass = tool({
           result.reason === 'slot_full'
             ? 'that slot just filled up. Let me check the schedule for another one.'
             : 'I could not complete that booking. Let me check the schedule again.';
-        sc.logTool('book_trial_class', false, result.reason);
+        sc.logTool('book_trial_class', false, result.reason, startedAt);
         return { sayThis: `${SORRY} ${why}`, booked: false };
       }
       sc.proposals.consume();
@@ -42,14 +43,14 @@ export const bookTrialClass = tool({
       if (sc.identity.guardianName === null && proposal.guardianName && sc.family && !sc.family.guardianName) {
         await sc.db.updateFamilyContact(familyId, { guardianName: proposal.guardianName });
       }
-      sc.logTool('book_trial_class', true, `${result.booking.id}${result.created ? '' : ' (existing)'}`);
+      sc.logTool('book_trial_class', true, `${result.booking.id}${result.created ? '' : ' (existing)'}`, startedAt);
       return {
         sayThis: `${result.child.name}'s free trial is set for ${describeSlot(result.slot)} in ${result.program.name}. Please arrive ten minutes early with water and sneakers.`,
         booked: true,
         alreadyExisted: !result.created,
       };
     } catch (err) {
-      sc.logTool('book_trial_class', false, err instanceof Error ? err.message : String(err));
+      sc.logTool('book_trial_class', false, err instanceof Error ? err.message : String(err), startedAt);
       return { sayThis: `${SORRY} I could not complete the booking right now. I can have the staff call back to finish it.`, booked: false };
     }
   },

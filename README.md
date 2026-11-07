@@ -16,15 +16,16 @@ tiers). It is not production software.
 | 1 Scaffold and hello-world agent | done | see git log |
 | 2 Database | done | see git log |
 | 3 Context, tools, prompt, memory | done, summary hook re-checked in Phase 4 | see git log |
-| 4 Browser demo | todo | |
+| 4 Browser demo | done, demo-phone memory check pending Umut | see git log |
 | 5 Interruption, metrics, tracing | todo | |
 | 6 Scenario eval | todo | |
 | 7 Inbound phone | todo | |
 | 8 Hardening, deploy, docs | todo | |
 
 Verified end to end so far: LiveKit worker registration, text and audio conversations through
-`lk agent debugger`, migrations, seed and booking semantics on real Postgres (`pnpm test:db`), one
-Braintrust span.
+`lk agent debugger`, migrations, seed and booking semantics on real Postgres (`pnpm test:db`), a
+browser call (typed and spoken) that booked a trial, wrote the summary and showed both on the booked
+page, one Braintrust span.
 
 ## Architecture
 
@@ -78,6 +79,11 @@ lk agent debugger stop --chat-history
 - 2026-11-07: `CONSOLE_SIMULATE_SIP_PHONE` is a dev-only knob honored only for fake jobs (`lk agent console|debugger`, no room) so the returning-family path can be exercised without a phone. It is ignored whenever a real participant exists.
 - 2026-11-07: Supabase RLS enabled on every table in `public` and `test` without policies. The app connects as the table owner (`postgres`), which bypasses RLS; the default `anon` and `authenticated` PostgREST roles are blocked. The Supabase MCP flagged the open tables as critical.
 
+- 2026-11-07: The live call page has a small "type instead of talking" input. It is not in the mockup; it lets a tester drive a booking without a microphone and it is how the Playwright checks run. Typed input interrupts the agent's speech like voice does.
+- 2026-11-07: The React starter was pruned to what the three screens use (Next 15, React 19, livekit-client, components-react, server-sdk). Rive, xyflow, shiki, motion, shadcn, radix and the theme toggle were removed. Fonts come from `next/font/google` (Inter, Space Grotesk).
+- 2026-11-07: The web app reads the repo `.env` through `next.config.ts` (`process.loadEnvFile`), so there is one secrets file. `web/.env.local` written by `lk app create` was deleted.
+- 2026-11-07: `web/` is linted by the root ESLint config. `eslint-config-next` needs `@eslint/eslintrc`, which breaks under the `minimatch >= 11` audit override (no default export), so the starter's lint setup was dropped.
+
 ## SDK notes
 
 Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-sdk` 2.19.2,
@@ -118,6 +124,16 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
 - Testing API: `session.run({ userInput }).wait()`; `result.expect.at(-1).isMessage({ role }).judge(llm, { intent })`;
   `containsFunctionCall({ name, args })` matches an argument subset. `nextEvent({ type })` returns a
   plain `EventAssert` without `judge`.
+- Browser token flow: `TokenSource.endpoint('/api/token')` posts a `TokenSourceRequest` JSON with
+  proto field names (`participant_attributes`, `room_config`); the response may use `server_url` /
+  `participant_token`. `useSession(tokenSource, { agentName, participantAttributes })` forwards
+  them; the route validates with Zod and copies only the four `movo.*` attributes to the token,
+  without `canUpdateOwnMetadata`.
+- Agent to browser state: `ctx.room.localParticipant.sendText(json, { topic: 'movo.state' })` on the
+  worker, `useTextStream('movo.state')` in React (last stream wins). Transcripts arrive through
+  `useSessionMessages()`; subscribe at app mount or the greeting is missed.
+- `session.start({ inputOptions: { deleteRoomOnClose: true } })` deletes the room when the agent
+  hangs up, which is how the browser learns the call ended.
 - Console and debugger: `ctx.isFakeJob` is true, `ctx.connect()` is a no-op and there is no remote
   participant; `waitForParticipant()` would hang.
 
@@ -154,10 +170,23 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
 - Shell trap: a `.env` line with a trailing `# comment` is parsed correctly by `node --env-file`,
   but `cut -d= -f2` in a shell keeps the comment. Read env values through node.
 
+- Editing any file under `web/` while a browser call is live remounts the React tree (hook order
+  changes), which disconnects the participant and ends the call. Finish the call first.
+- `useSession` calls `prepareConnection()` on mount with the empty form, so the first `/api/token`
+  request logs a 400 ("Enter your name") in the console. Harmless; the real start sends the form.
+- The Playwright MCP resolves relative screenshot paths against its own workspace root
+  (`~/Downloads/movo`), not the repo. Use absolute paths.
+- The room name shows as `unknown` in `calls.room_name` for console sessions; real rooms are
+  `web-<id>`.
+
 ## Known gaps
 
 - OpenAI account has no active billing yet (429 "account is not active"); the eval judge,
   simulated caller, and SDK LLM-judge tests cannot run until it is added.
+- Browser AC-2 (form with `DEMO_RETURNING_PHONE` loads the demo family): the context test and the
+  debugger run cover the code path; the browser check needs the real number typed by Umut.
+- The LiveKit Cloud transcript/session view was not opened by the agent; session reports were
+  uploaded (`Session report uploaded to LiveKit Cloud` in the worker log).
 - `pnpm audit --prod`: clean on 2026-11-07 after removing the two plugins and overriding `glob`
   and `minimatch`.
 

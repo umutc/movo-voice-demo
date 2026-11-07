@@ -16,27 +16,28 @@ export const proposeBooking = tool({
   }),
   execute: async ({ program_id, slot_id, child_name, child_age, guardian_name }, { ctx }) => {
     const sc = ctx.userData as SessionContext;
+    const startedAt = Date.now();
     try {
       const [program, slot] = await Promise.all([sc.db.getProgram(program_id), sc.db.getSlot(slot_id)]);
       if (!program || !slot || slot.programId !== program.id) {
-        sc.logTool('propose_booking', false, `bad ids ${program_id}/${slot_id}`);
+        sc.logTool('propose_booking', false, `bad ids ${program_id}/${slot_id}`, startedAt);
         return { sayThis: `${SORRY} that slot does not match the program. Let me check the schedule again.`, readbackText: null };
       }
       if (slot.bookedCount >= slot.capacity) {
-        sc.logTool('propose_booking', false, `slot ${slot_id} full`);
+        sc.logTool('propose_booking', false, `slot ${slot_id} full`, startedAt);
         return { sayThis: `${SORRY} that slot just filled up. Let me check the schedule for another one.`, readbackText: null };
       }
       const readbackText =
         `Just to confirm: a free trial for ${child_name.trim()}, age ${child_age}, in ${program.name} on ${describeSlot(slot)}, ` +
         `booked under ${guardian_name.trim()}. Shall I book that?`;
       const proposal = sc.proposals.propose({ programId: program.id, slotId: slot.id, childName: child_name, childAge: child_age, guardianName: guardian_name }, readbackText);
-      sc.logTool('propose_booking', true, `${proposal.proposalId} ${program.id} ${slot.id} ${child_name.trim()}`);
+      sc.logTool('propose_booking', true, `${proposal.proposalId} ${program.id} ${slot.id} ${child_name.trim()}`, startedAt);
       return {
         readbackText,
         instruction: 'Say readbackText to the caller word for word and nothing else, then wait for the answer. Do not call book_trial_class until the caller says yes to this exact read-back.',
       };
     } catch (err) {
-      sc.logTool('propose_booking', false, err instanceof Error ? err.message : String(err));
+      sc.logTool('propose_booking', false, err instanceof Error ? err.message : String(err), startedAt);
       return { sayThis: `${SORRY} I could not prepare that booking right now. Let me try again in a moment.`, readbackText: null };
     }
   },

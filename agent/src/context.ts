@@ -299,7 +299,9 @@ export class SessionContext {
   outcome: 'inquiry' | 'booked' | 'callback' | 'no_answer' = 'inquiry';
   readonly bookingIds: string[] = [];
   readonly callbackIds: string[] = [];
-  readonly toolLog: { at: Date; name: string; ok: boolean; summary: string }[] = [];
+  readonly toolLog: { at: Date; name: string; ok: boolean; summary: string; durationMs: number | null }[] = [];
+  /** Called after every tool log entry and proposal change; the worker wires the state channel here. */
+  onChange: (() => void) | null = null;
 
   constructor(init: SessionContextInit) {
     this.identity = init.identity;
@@ -356,7 +358,12 @@ export class SessionContext {
     return fam.id;
   }
 
-  logTool(name: string, ok: boolean, summary: string): void {
-    this.toolLog.push({ at: this.now(), name, ok, summary });
+  logTool(name: string, ok: boolean, summary: string, startedAt?: number): void {
+    this.toolLog.push({ at: this.now(), name, ok, summary, durationMs: startedAt ? Date.now() - startedAt : null });
+    this.onChange?.();
+  }
+
+  notifyChange(): void {
+    this.onChange?.();
   }
 }

@@ -15,6 +15,7 @@ import { ATTR, PARTICIPANT_KIND_SIP, resolveIdentity, SessionContext } from './c
 import { closeCall, makeLlmAffirmationJudge, openCall } from './memory.ts';
 import { FakeDialPort, FakeSmsPort } from './ports/index.ts';
 import { buildEnrollmentAgent, wireSessionEvents } from './session.ts';
+import { STATE_TOPIC, StateChannel } from './state-channel.ts';
 
 // Worker entry. Identity comes from server-reported facts (participant kind, SIP attributes,
 // dispatch metadata), the family is bound once here, tools read it from the session context.
@@ -88,6 +89,22 @@ export default defineAgent({
     });
     wireSessionEvents(session, sc);
 
+    // "Under the hood" snapshots for the browser demo: real state only, best effort delivery.
+    const state = new StateChannel({ stt: cfg.LK_STT_MODEL, llm: cfg.LK_LLM_MODEL, tts: cfg.LK_TTS_MODEL });
+    if (!ctx.isFakeJob) {
+      state.attach({
+        send: async (text) => {
+          await ctx.room.localParticipant?.sendText(text, { topic: STATE_TOPIC });
+        },
+      });
+    }
+    sc.onChange = () => state.push(sc);
+    session.on(AgentSessionEventTypes.ConversationItemAdded, (ev) => {
+      if (ev.item.type === 'message' && ev.item.role === 'assistant' && ev.item.interrupted) state.interruptions += 1;
+      state.push(sc);
+    });
+    session.on(AgentSessionEventTypes.FunctionToolsExecuted, () => state.push(sc));
+
     // Summary + call row finish run once, whichever comes first: session close or job shutdown.
     let finalized: Promise<void> | null = null;
     const finalize = (reason: string): Promise<void> => {
@@ -101,13 +118,17 @@ export default defineAgent({
     finalizers.set(ctx, finalize);
     session.on(AgentSessionEventTypes.Close, (ev) => {
       logger.info({ reason: ev.reason, room: ctx.room.name }, 'session closed');
+      state.ended = true;
+      state.push(sc);
       // End the job when the session ends (end_call, caller hung up, error). The worker then runs
       // onSessionEnd (summary + call row) and the shutdown callbacks before it disconnects.
       ctx.shutdown(`session closed: ${String(ev.reason)}`);
     });
     ctx.addShutdownCallback(() => finalize('job shutdown'));
 
-    await session.start({ agent, room: ctx.room });
+    // deleteRoomOnClose: the browser sees the room go away when the agent hangs up (end_call).
+    await session.start({ agent, room: ctx.room, inputOptions: { deleteRoomOnClose: true } });
+    state.push(sc);
   },
 });
 

@@ -13,16 +13,17 @@ export const requestHumanCallback = tool({
   }),
   execute: async ({ reason, preferred_time }, { ctx }) => {
     const sc = ctx.userData as SessionContext;
+    const startedAt = Date.now();
     try {
       const cb = await sc.db.createCallbackRequest({ familyId: sc.familyId, phone: sc.identity.phone, reason, preferredTime: preferred_time ?? null });
       sc.callbackIds.push(cb.id);
       if (sc.outcome !== 'booked') sc.outcome = 'callback';
-      sc.logTool('request_human_callback', true, cb.id);
+      sc.logTool('request_human_callback', true, cb.id, startedAt);
       const when = preferred_time ? ` ${preferred_time}` : ' within one business day';
       const to = sc.identity.phone ? ' at the number you are calling from' : '';
       return { sayThis: `The academy staff will call you back${to}${when} about that.`, callbackId: cb.id };
     } catch (err) {
-      sc.logTool('request_human_callback', false, err instanceof Error ? err.message : String(err));
+      sc.logTool('request_human_callback', false, err instanceof Error ? err.message : String(err), startedAt);
       return { sayThis: `${SORRY} I could not log that callback right now. Please call the academy office directly.` };
     }
   },

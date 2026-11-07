@@ -10,7 +10,8 @@
     "./seed-data": "./seed-data.ts",
     "./port": "./port.ts",
     "./seed": "./seed.ts",
-    "./client": "./client.ts"
+    "./client": "./client.ts",
+    "./read": "./read.ts"
   },
   "scripts": {
     "generate": "drizzle-kit generate && sed -i '' 's/\"public\"\\.//g' migrations/*.sql",
