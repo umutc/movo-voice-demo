@@ -22,8 +22,10 @@ applications:
           commands:
             # SSR runtime only sees variables written to .env.production at build time.
             - cd "$(git rev-parse --show-toplevel)/web" && pwd && env | grep -E '^(LIVEKIT_|DATABASE_URL|AGENT_NAME|ALLOW_TOKEN_ROUTE|DEMO_|LK_|NEXT_PUBLIC_)' >> .env.production && pnpm build
+            # Amplify packages web/node_modules at deploy time; the hoisted install lives at the root, so copy it in.
+            - cd "$(git rev-parse --show-toplevel)" && rsync -a --delete node_modules/ web/node_modules/ && ls web/node_modules/next/package.json
       artifacts:
-        # buildPath / is the parent of the checkout (CODEBUILD_SRC_DIR); the repo sits in movo-voice-demo/.
-        baseDirectory: movo-voice-demo/web/.next
+        # Resolved relative to appRoot even with buildPath set.
+        baseDirectory: .next
         files:
           - '**/*'
