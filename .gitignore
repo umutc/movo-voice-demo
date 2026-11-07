@@ -1,0 +1,22 @@
+# secrets
+.env
+.env.*
+!.env.example
+telephony/out/
+
+# runtime output
+metrics/
+eval/out/
+*.log
+
+# deps and builds
+node_modules/
+dist/
+web/.next/
+web/out/
+.turbo/
+
+# os and editors
+.DS_Store
+.idea/
+.vscode/

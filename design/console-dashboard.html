@@ -1,0 +1,100 @@
+<!doctype html>
+<!-- Reference mockup exported from the design canvas. Static HTML, inline styles, synthetic data. Not production code: use it for structure, spacing, copy and tokens. See design/README.md. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rollcall dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6F2}
+a{color:#166534}a:hover{color:#14532D}
+button:focus-visible,a:focus-visible{outline:3px solid #166534;outline-offset:2px}
+</style>
+</head>
+<body>
+<div style="min-height: 100vh; background: #F4F6F2; color: #0F172A; font-family: Inter, system-ui, sans-serif; display: flex; flex-wrap: wrap; align-items: stretch">
+
+  <nav aria-label="Rollcall" style="flex: 0 0 240px; box-sizing: border-box; padding: 20px 16px 24px; background: #FFFFFF; border-right: 1px solid #E2E8E0; display: flex; flex-direction: column; gap: 2px">
+    <a href="console-dashboard.html" style="display: flex; align-items: center; gap: 8px; padding: 4px 8px; text-decoration: none; color: #0F172A"><span style="width: 14px; height: 14px; border-radius: 3px; background: #166534; display: inline-block" aria-hidden="true"></span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -0.02em">rollcall</span></a>
+    <button type="button" aria-label="Switch academy" style="margin: 12px 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid #E2E8E0; background: #F8FAF7; font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 500; color: #0F172A; cursor: pointer; text-align: left"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Brooklyn Youth Soccer Academy</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10l5 5 5-5"></path></svg></button>
+    <a href="console-dashboard.html" aria-current="page" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; background: #F4F6F2; color: #0F172A; font-size: 14px; font-weight: 600; text-decoration: none">Dashboard</a>
+    <a href="console-calls.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Calls</a>
+    <a href="console-callbacks.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Callbacks<span style="margin-left: auto; font-size: 12px; font-weight: 600; color: #B45309">3</span></a>
+    <a href="console-families.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Families</a>
+    <a href="console-programs.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Programs and slots</a>
+    <a href="console-quality.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Quality</a>
+    <a href="console-settings.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Agent settings</a>
+    <div style="flex: 1 1 auto"></div>
+    <a href="parent-main.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 13px; font-weight: 500; text-decoration: none">Parent site</a>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 12px 8px 0"><span style="width: 30px; height: 30px; border-radius: 999px; background: #0F172A; color: #FFFFFF; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center">RA</span><div style="display: flex; flex-direction: column; line-height: 1.2"><span style="font-size: 13px; font-weight: 500">Rosa Alvarez</span><span style="font-size: 11px; color: #475569">Head coach, admin</span></div></div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 40px 32px; display: flex; flex-direction: column; gap: 24px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 26px; letter-spacing: -0.01em">Saturday, November 7</h1>
+        <span style="font-size: 14px; color: #475569">Maya is answering on the parent site and the inbound number. Outbound calls and SMS are off.</span>
+      </div>
+      <button type="button" style="height: 38px; padding: 0 14px; border-radius: 8px; border: 1px solid #CBD5D0; background: #FFFFFF; color: #0F172A; font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 500; cursor: pointer">Today</button>
+    </div>
+
+    <section style="background: #FFFFFF; border: 1px solid #E2E8E0; border-radius: 12px; padding: 24px 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 32px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 56px; line-height: 1; letter-spacing: -0.03em">6</span>
+        <span style="font-size: 15px; color: #475569">calls today</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 24px; font-size: 14px">
+        <span><strong style="font-weight: 600; color: #166534">3</strong> trials booked</span>
+        <span><strong style="font-weight: 600; color: #B45309">3</strong> callbacks waiting</span>
+        <span><strong style="font-weight: 600">790 ms</strong> median reply, 61 turns</span>
+        <span><strong style="font-weight: 600">10 of 10</strong> core evals passing</span>
+      </div>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 14px">
+        <svg width="220" height="56" viewBox="0 0 220 56" role="img" aria-label="Calls per day, last seven days: 4, 7, 5, 9, 6, 8, 6"><polyline points="0,44 36,20 72,36 108,4 144,28 180,12 216,28" fill="none" stroke="#166534" stroke-width="2" stroke-linejoin="round"></polyline><circle cx="216" cy="28" r="3" fill="#166534"></circle></svg>
+        <div style="display: flex; flex-direction: column; line-height: 1.3"><span style="font-size: 14px; font-weight: 600">45 calls this week</span><span style="font-size: 12px; color: #475569">19 trials booked</span></div>
+      </div>
+    </section>
+
+    <section style="background: #FFFFFF; border: 1px solid #E2E8E0; border-radius: 12px; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid #E2E8E0"><h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 600; font-size: 15px">Today's calls</h2><a href="console-calls.html" style="font-size: 13px; font-weight: 500">Open calls</a></div>
+      <div style="overflow-x: auto; padding: 0 24px 8px">
+        <table style="border-collapse: collapse; width: 100%; font-size: 14px">
+          <thead><tr style="color: #475569; text-align: left"><th style="font-weight: 500; padding: 10px 0; border-bottom: 1px solid #E2E8E0; width: 72px">Time</th><th style="font-weight: 500; padding: 10px 12px; border-bottom: 1px solid #E2E8E0">Family</th><th style="font-weight: 500; padding: 10px 12px; border-bottom: 1px solid #E2E8E0">Child</th><th style="font-weight: 500; padding: 10px 12px; border-bottom: 1px solid #E2E8E0">Channel</th><th style="font-weight: 500; padding: 10px 12px; border-bottom: 1px solid #E2E8E0">Outcome</th><th style="font-weight: 500; padding: 10px 0; border-bottom: 1px solid #E2E8E0; text-align: right">Length</th></tr></thead>
+          <tbody>
+            <tr><td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">10:42</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; font-weight: 500">Whitfield</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; color: #475569">Emma, 7</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; color: #475569">Browser</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #166534"></span>Booked, U8 Nov 14</span></td><td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">2:04</td></tr>
+            <tr><td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">10:31</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; font-weight: 500">Okafor</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; color: #475569">Amara, 9 and Tobi, 11</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; color: #475569">Phone</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #B45309"></span>Callback, sibling discount</span></td><td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">1:38</td></tr>
+            <tr><td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">10:12</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; font-weight: 500">Reyes</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; color: #475569">Mateo, 10</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; color: #475569">Phone</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #166534"></span>Booked, U12 Nov 12</span></td><td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">2:51</td></tr>
+            <tr><td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">09:58</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; font-weight: 500; color: #475569">Unknown caller</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; color: #475569">age 3</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; color: #475569">Browser</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #B45309"></span>Callback, no program for age</span></td><td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">0:47</td></tr>
+            <tr><td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">09:40</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; font-weight: 500">Nakamura</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; color: #475569">Yui, 6</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9; color: #475569">Phone</td><td style="padding: 10px 12px; border-bottom: 1px solid #F1F5F9"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #166534"></span>Booked, U8 Nov 21</span></td><td style="padding: 10px 0; border-bottom: 1px solid #F1F5F9; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">3:12</td></tr>
+            <tr><td style="padding: 10px 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">09:21</td><td style="padding: 10px 12px; font-weight: 500">Patel</td><td style="padding: 10px 12px; color: #475569">Riya, 8</td><td style="padding: 10px 12px; color: #475569">Phone</td><td style="padding: 10px 12px"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #B45309"></span>Callback, asked about dance</span></td><td style="padding: 10px 0; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">1:05</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+      <section style="flex: 1 1 360px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E8E0; border-radius: 12px; display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #E2E8E0"><h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 600; font-size: 15px">Callbacks waiting</h2><a href="console-callbacks.html" style="font-size: 13px; font-weight: 500">All callbacks</a></div>
+        <div style="display: flex; flex-direction: column">
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #F1F5F9; font-size: 14px"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">Okafor, sibling discount</span><span style="font-size: 12px; color: #475569">After 5 pm · waiting 2 h</span></div><a href="console-callbacks.html" style="font-size: 13px; font-weight: 500; align-self: center">Open</a></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #F1F5F9; font-size: 14px"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">Unknown caller, child aged 3</span><span style="font-size: 12px; color: #475569">No program for that age · waiting 2 h</span></div><a href="console-callbacks.html" style="font-size: 13px; font-weight: 500; align-self: center">Open</a></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 20px; font-size: 14px"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">Patel, dance classes</span><span style="font-size: 12px; color: #475569">Out of scope · waiting 3 h</span></div><a href="console-callbacks.html" style="font-size: 13px; font-weight: 500; align-self: center">Open</a></div>
+        </div>
+      </section>
+      <section style="flex: 1 1 360px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E8E0; border-radius: 12px; display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #E2E8E0"><h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 600; font-size: 15px">Trial seats, next 7 days</h2><a href="console-programs.html" style="font-size: 13px; font-weight: 500">Manage</a></div>
+        <div style="display: flex; flex-direction: column">
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #F1F5F9; font-size: 14px"><span>U6 · Sun Nov 8, 9:00 · Prospect Park</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #B45309">8 of 8, full</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #F1F5F9; font-size: 14px"><span>U14 · Mon Nov 9, 6:00 pm · Prospect Park</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #475569">2 of 10</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #F1F5F9; font-size: 14px"><span>U12 · Thu Nov 12, 5:30 pm · McCarren</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #475569">5 of 10</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #F1F5F9; font-size: 14px"><span>U8 · Sat Nov 14, 10:00 · Prospect Park</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #475569">7 of 8</span></div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 20px; font-size: 14px"><span>U10 · Sat Nov 14, 11:30 · McCarren</span><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #475569">4 of 10</span></div>
+        </div>
+      </section>
+    </div>
+
+    <p style="margin: auto 0 0; padding-top: 8px; font-size: 12px; color: #475569">Fictional academy and families. Prototype on LiveKit Agents.</p>
+  </main>
+</div>
+</body>
+</html>

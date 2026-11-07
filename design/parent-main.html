@@ -1,0 +1,87 @@
+<!doctype html>
+<!-- Reference mockup exported from the design canvas. Static HTML, inline styles, synthetic data. Not production code: use it for structure, spacing, copy and tokens. See design/README.md. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>BYSA pre-call form</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6F2}
+a{color:#166534}a:hover{color:#14532D}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #166534;outline-offset:2px}
+</style>
+</head>
+<body>
+<div style="min-height: 100vh; background: #F4F6F2; color: #0F172A; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column">
+
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 40px; border-bottom: 1px solid #E2E8E0; background: #FFFFFF">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="#166534" stroke-width="2" aria-hidden="true"><rect x="1" y="1" width="28" height="20" rx="2"></rect><path d="M15 1v20"></path><circle cx="15" cy="11" r="3.5"></circle></svg>
+      <div style="display: flex; flex-direction: column; line-height: 1.05">
+        <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 22px; letter-spacing: -0.03em">BYSA</span>
+        <span style="font-size: 11px; color: #475569; letter-spacing: 0.04em; text-transform: uppercase">Brooklyn Youth Soccer Academy</span>
+      </div>
+    </div>
+    <nav aria-label="Site" style="display: flex; gap: 24px; font-size: 14px; font-weight: 500">
+      <a href="#programs" style="color: #0F172A; text-decoration: none">Programs</a>
+      <a href="#coaches" style="color: #0F172A; text-decoration: none">Coaches</a>
+      <a href="#trial" style="color: #166534; text-decoration: none">Free trial</a>
+    </nav>
+  </header>
+
+  <main style="flex: 1 1 auto; max-width: 1160px; width: 100%; margin: 0 auto; box-sizing: border-box; padding: 64px 40px 56px; display: flex; flex-wrap: wrap; gap: 56px; align-items: flex-start">
+
+    <section style="flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+      <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 54px; line-height: 1.02; letter-spacing: -0.02em">Book a free trial class by talking to Maya.</h1>
+      <p style="margin: 0; font-size: 18px; line-height: 1.55; color: #334155; max-width: 50ch">Maya answers for the academy. Tell her your child's age; she finds the right group, offers a slot in the next two weeks, reads the details back and books it on the call. Interrupt her whenever you like.</p>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; padding: 20px 24px; border-left: 3px solid #166534; background: #FFFFFF; border-radius: 0 12px 12px 0">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #475569">A typical call</span>
+        <p style="margin: 0; font-size: 15px; line-height: 1.5"><span style="font-weight: 600">You:</span> My son is nine and we're near McCarren.</p>
+        <p style="margin: 0; font-size: 15px; line-height: 1.5"><span style="font-weight: 600; color: #166534">Maya:</span> Nine means U10 at McCarren Park, Saturdays at eleven thirty. The next open trial is this Saturday. Want me to hold a spot?</p>
+      </div>
+
+      <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #475569">Maya is an AI assistant. This is a prototype running on fictional academy data; no real families are contacted.</p>
+    </section>
+
+    <section id="trial" style="flex: 0 1 440px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E8E0; border-radius: 12px; padding: 28px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 600; font-size: 22px">Start a call</h2>
+        <p style="margin: 0; font-size: 14px; color: #475569">About two minutes. Uses your microphone.</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="guardian" style="font-size: 13px; font-weight: 500">Your name</label>
+        <input id="guardian" name="guardian" type="text" autocomplete="name" placeholder="Dana Whitfield" style="height: 46px; padding: 0 12px; font-size: 15px; font-family: Inter, system-ui, sans-serif; border: 1px solid #CBD5D0; border-radius: 8px; background: #FFFFFF; color: #0F172A">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="phone" style="font-size: 13px; font-weight: 500">Mobile number</label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="(718) 555-0142" style="height: 46px; padding: 0 12px; font-size: 15px; font-family: Inter, system-ui, sans-serif; border: 1px solid #CBD5D0; border-radius: 8px; background: #FFFFFF; color: #0F172A">
+        <span style="font-size: 12px; color: #475569">So Maya recognizes you if you call back. Not verified in this prototype.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="email" style="font-size: 13px; font-weight: 500">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" placeholder="dana@example.com" style="height: 46px; padding: 0 12px; font-size: 15px; font-family: Inter, system-ui, sans-serif; border: 1px solid #CBD5D0; border-radius: 8px; background: #FFFFFF; color: #0F172A">
+      </div>
+
+      <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: #F4F6F2; border-radius: 8px">
+        <input id="consent" name="consent" type="checkbox" style="width: 20px; height: 20px; margin: 1px 0 0; accent-color: #166534; flex: 0 0 auto">
+        <label for="consent" style="font-size: 13px; line-height: 1.5; color: #334155">I agree to talk with an automated assistant about academy programs. I can end the call at any time.</label>
+      </div>
+
+      <a href="parent-call.html" style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 50px; border-radius: 8px; background: #166534; color: #FFFFFF; font-size: 15px; font-weight: 600; text-decoration: none">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+        <span>Start call</span>
+      </a>
+
+      <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #475569; text-align: center">Or call <strong style="color: #0F172A">[LIVEKIT NUMBER]</strong> from any phone.</p>
+    </section>
+  </main>
+
+  <footer style="padding: 16px 40px; font-size: 12px; color: #475569; border-top: 1px solid #E2E8E0; display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between">
+    <span>Prototype on LiveKit Agents. Not a production system.</span>
+    <span>Fictional academy, programs, coaches and families.</span>
+  </footer>
+</div>
+</body>
+</html>

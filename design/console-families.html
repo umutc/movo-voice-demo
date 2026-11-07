@@ -1,0 +1,88 @@
+<!doctype html>
+<!-- Reference mockup exported from the design canvas. Static HTML, inline styles, synthetic data. Not production code: use it for structure, spacing, copy and tokens. See design/README.md. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rollcall families</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#F4F6F2}
+a{color:#166534}a:hover{color:#14532D}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #166534;outline-offset:2px}
+</style>
+</head>
+<body>
+<div style="min-height: 100vh; background: #F4F6F2; color: #0F172A; font-family: Inter, system-ui, sans-serif; display: flex; flex-wrap: wrap; align-items: stretch">
+
+  <nav aria-label="Rollcall" style="flex: 0 0 240px; box-sizing: border-box; padding: 20px 16px 24px; background: #FFFFFF; border-right: 1px solid #E2E8E0; display: flex; flex-direction: column; gap: 2px">
+    <a href="console-dashboard.html" style="display: flex; align-items: center; gap: 8px; padding: 4px 8px; text-decoration: none; color: #0F172A"><span style="width: 14px; height: 14px; border-radius: 3px; background: #166534; display: inline-block" aria-hidden="true"></span><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 19px; letter-spacing: -0.02em">rollcall</span></a>
+    <button type="button" aria-label="Switch academy" style="margin: 12px 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid #E2E8E0; background: #F8FAF7; font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 500; color: #0F172A; cursor: pointer; text-align: left"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Brooklyn Youth Soccer Academy</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10l5 5 5-5"></path></svg></button>
+    <a href="console-dashboard.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Dashboard</a>
+    <a href="console-calls.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Calls</a>
+    <a href="console-callbacks.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Callbacks<span style="margin-left: auto; font-size: 12px; font-weight: 600; color: #B45309">3</span></a>
+    <a href="console-families.html" aria-current="page" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; background: #F4F6F2; color: #0F172A; font-size: 14px; font-weight: 600; text-decoration: none">Families</a>
+    <a href="console-programs.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Programs and slots</a>
+    <a href="console-quality.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Quality</a>
+    <a href="console-settings.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 14px; font-weight: 500; text-decoration: none">Agent settings</a>
+    <div style="flex: 1 1 auto"></div>
+    <a href="parent-main.html" style="display: flex; align-items: center; height: 38px; padding: 0 10px; border-radius: 8px; color: #334155; font-size: 13px; font-weight: 500; text-decoration: none">Parent site</a>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 40px 32px; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 26px; letter-spacing: -0.01em">Families</h1>
+        <span style="font-size: 14px; color: #475569">What Maya remembers between calls. Caller id is a hint, not a login; form-entered numbers only open demo records.</span>
+      </div>
+      <div style="display: flex; gap: 10px">
+        <label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search families</label>
+        <input id="q" type="search" placeholder="Search name or phone" style="height: 38px; width: 240px; padding: 0 12px; font-size: 14px; font-family: Inter, system-ui, sans-serif; border: 1px solid #CBD5D0; border-radius: 8px; background: #FFFFFF; color: #0F172A">
+        <button type="button" style="height: 38px; padding: 0 14px; border-radius: 8px; border: 0; background: #166534; color: #FFFFFF; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer">Add family</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <section style="flex: 999 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E8E0; border-radius: 12px">
+        <div style="overflow-x: auto; padding: 0 24px 8px">
+          <table style="border-collapse: collapse; width: 100%; font-size: 14px">
+            <thead><tr style="color: #475569; text-align: left"><th style="font-weight: 500; padding: 14px 0 10px; border-bottom: 1px solid #E2E8E0">Family</th><th style="font-weight: 500; padding: 14px 12px 10px; border-bottom: 1px solid #E2E8E0">Children</th><th style="font-weight: 500; padding: 14px 12px 10px; border-bottom: 1px solid #E2E8E0">Last call</th><th style="font-weight: 500; padding: 14px 12px 10px; border-bottom: 1px solid #E2E8E0">Identity</th><th style="font-weight: 500; padding: 14px 0 10px; border-bottom: 1px solid #E2E8E0">Latest</th></tr></thead>
+            <tbody>
+              <tr style="background: #F4F6F2"><td style="padding: 12px 0; border-bottom: 1px solid #F1F5F9"><div style="display: flex; flex-direction: column"><span style="font-weight: 600">Whitfield, Dana <span style="font-weight: 500; font-size: 12px; color: #1E40AF; margin-left: 6px">demo record</span></span><span style="font-size: 12px; color: #475569; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">+1 718 ••• 0142</span></div></td><td style="padding: 12px">Emma, 7</td><td style="padding: 12px; color: #475569">Today 10:42</td><td style="padding: 12px; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">self_reported</td><td style="padding: 12px 0"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #166534"></span>Trial booked, Nov 14</span></td></tr>
+              <tr><td style="padding: 12px 0; border-bottom: 1px solid #F1F5F9"><div style="display: flex; flex-direction: column"><span style="font-weight: 600">Okafor, Chidi</span><span style="font-size: 12px; color: #475569; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">+1 347 ••• 8821</span></div></td><td style="padding: 12px">Amara, 9 and Tobi, 11</td><td style="padding: 12px; color: #475569">Today 10:31</td><td style="padding: 12px; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">caller_id_only</td><td style="padding: 12px 0"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #B45309"></span>Callback waiting</span></td></tr>
+              <tr><td style="padding: 12px 0; border-bottom: 1px solid #F1F5F9"><div style="display: flex; flex-direction: column"><span style="font-weight: 600">Reyes, Marisol</span><span style="font-size: 12px; color: #475569; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">+1 929 ••• 4410</span></div></td><td style="padding: 12px">Mateo, 10</td><td style="padding: 12px; color: #475569">Today 10:12</td><td style="padding: 12px; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">caller_id_only</td><td style="padding: 12px 0"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #166534"></span>Trial booked, Nov 12</span></td></tr>
+              <tr><td style="padding: 12px 0; border-bottom: 1px solid #F1F5F9"><div style="display: flex; flex-direction: column"><span style="font-weight: 600; color: #475569">Unknown caller</span><span style="font-size: 12px; color: #475569; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">browser, email only</span></div></td><td style="padding: 12px; color: #475569">one child, age 3</td><td style="padding: 12px; color: #475569">Today 09:58</td><td style="padding: 12px; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">self_reported</td><td style="padding: 12px 0"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #B45309"></span>Callback waiting</span></td></tr>
+              <tr><td style="padding: 12px 0; border-bottom: 1px solid #F1F5F9"><div style="display: flex; flex-direction: column"><span style="font-weight: 600">Nakamura, Ken</span><span style="font-size: 12px; color: #475569; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">+1 718 ••• 3307</span></div></td><td style="padding: 12px">Yui, 6</td><td style="padding: 12px; color: #475569">Today 09:40</td><td style="padding: 12px; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">caller_id_only</td><td style="padding: 12px 0"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #166534"></span>Trial booked, Nov 21</span></td></tr>
+              <tr><td style="padding: 12px 0"><div style="display: flex; flex-direction: column"><span style="font-weight: 600">Patel, Nisha</span><span style="font-size: 12px; color: #475569; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">+1 646 ••• 9052</span></div></td><td style="padding: 12px">Riya, 8</td><td style="padding: 12px; color: #475569">Today 09:21</td><td style="padding: 12px; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace">caller_id_only</td><td style="padding: 12px 0"><span style="display: inline-flex; align-items: center; gap: 7px"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: #B45309"></span>Callback waiting</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside aria-label="Family detail" style="flex: 1 1 300px; max-width: 380px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E8E0; border-radius: 12px; display: flex; flex-direction: column">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8E0; display: flex; flex-direction: column; gap: 4px">
+          <h2 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 600; font-size: 17px">Whitfield</h2>
+          <span style="font-size: 13px; color: #475569">Dana Whitfield · dana@example.com · Emma, 7 · 2 calls</span>
+        </div>
+        <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8E0; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #475569">Memory summary</span>
+          <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #334155">Dana asked about her daughter Emma, age seven, on November 3 and did not book. Today she booked the U8 Foundations trial at Prospect Park for Saturday, November 14 at 10 AM. Mentioned parking; told to ask the coach.</p>
+          <span style="font-size: 12px; color: #475569">Written by the model after each call. Read into Maya's prompt when this family calls again.</span>
+          <button type="button" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #CBD5D0; background: #FFFFFF; font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; align-self: flex-start">Edit summary</button>
+        </div>
+        <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8E0; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #475569">Bookings</span>
+          <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 500">Emma · U8 Foundations trial</span><span style="color: #475569">Sat Nov 14, 10:00 · Prospect Park · Coach Alvarez</span></div><span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #475569; align-self: center">BK-[ID]</span></div>
+        </div>
+        <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #475569">Calls</span>
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><span>Today 10:42 · browser · 2:04</span><a href="console-calls.html" style="font-weight: 500">Open</a></div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><span>Nov 3, 18:20 · phone · 1:51</span><a href="console-calls.html" style="font-weight: 500">Open</a></div>
+        </div>
+      </aside>
+    </div>
+
+    <p style="margin: auto 0 0; padding-top: 8px; font-size: 12px; color: #475569">Fictional academy and families. Prototype on LiveKit Agents.</p>
+  </main>
+</div>
+</body>
+</html>
