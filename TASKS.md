@@ -102,15 +102,15 @@ Commit `phase-7: inbound phone via LiveKit number`.
 
 ## Phase 8: Hardening, deploy, docs, recording (Sunday 13:30, 180 min incl. lunch)
 
-- [ ] 20+ real turns across browser and phone with dev models; `pnpm report:latency`.
-- [ ] Digit-spelling step: check endpointing while reading a phone number; adjust if needed.
-- [ ] `lk agent simulate text -n 10` plus 2 or 3 audio simulations in the dashboard; screenshots.
-- [ ] Switch `LK_TTS_MODEL` to Cartesia for a quality check; back to the cheap model until recording.
-- [ ] `lk agent create` (or current equivalent) to deploy with secrets; confirm the generated Dockerfile uses Node 24 and `pnpm install --frozen-lockfile`; stop the local worker; inbound still works. AC-7.
-- [ ] `pnpm audit --prod` clean of high or critical findings; record moderate ones in README.
-- [ ] README.md: honest scope; architecture diagram; setup in 10 steps; commands; SDK notes; cost estimate with assumptions (PRD 15); latency table (dated, n); eval scorecard; Braintrust screenshot; gotchas; known gaps; "what production would need" (concurrency, failover, TCPA consent capture, recording consent, PII handling, verified identity for web, warm transfer, AMD for outbound, regression evals from production calls). AC-8.
-- [ ] `demo-script.md`: browser call with booking and an interruption; phone call from a returning number; Braintrust trace; latency table; eval scorecard.
-- [ ] Final `pnpm typecheck && pnpm lint && pnpm test && pnpm test:db && pnpm eval --profile core` green. Tag `v0.1-demo`.
+- [~] 20+ real turns across browser and phone with dev models; `pnpm report:latency`. (2026-11-07: 10 assistant turns from two typed browser calls in `metrics/`; spoken turns with end-to-end latency need Umut's voice and phone calls, then `pnpm report:latency` again for the README table)
+- [~] Digit-spelling step: check endpointing while reading a phone number; adjust if needed. (needs a voice call; eval scenario 8 covers the read-back logic in text)
+- [~] `lk agent simulate text -n 10` plus 2 or 3 audio simulations in the dashboard; screenshots. (2026-11-07: two scripted text simulations against the deployed agent passed 2/2, run SR_ZGiCTDKGyFYc; the 10 generated scenarios and the audio simulations were cut per the header cut list item 1)
+- [-] Switch `LK_TTS_MODEL` to Cartesia for a quality check; back to the cheap model until recording. (cut list item 2; `LK_TTS_MODEL_RECORDING` in .env.example holds the Cartesia line for the recording)
+- [~] `lk agent create` (or current equivalent) to deploy with secrets; confirm the generated Dockerfile uses Node 24 and `pnpm install --frozen-lockfile`; stop the local worker; inbound still works. AC-7. (2026-11-07: deployed as CA_mAZxE8eZW6PH in us-east, Dockerfile node:24-slim with `pnpm install --frozen-lockfile --prod --filter agent... --filter db...`, local worker stopped, cloud agent served the text simulation; inbound needs the dispatch rule assigned to the number by Umut)
+- [x] `pnpm audit --prod` clean of high or critical findings; record moderate ones in README. (2026-11-07: clean after next 15.5.29 and the postcss override)
+- [x] README.md: honest scope; architecture diagram; setup in 10 steps; commands; SDK notes; cost estimate with assumptions (PRD 15); latency table (dated, n); eval scorecard; Braintrust screenshot; gotchas; known gaps; "what production would need" (concurrency, failover, TCPA consent capture, recording consent, PII handling, verified identity for web, warm transfer, AMD for outbound, regression evals from production calls). AC-8.
+- [x] `demo-script.md`: browser call with booking and an interruption; phone call from a returning number; Braintrust trace; latency table; eval scorecard.
+- [x] Final `pnpm typecheck && pnpm lint && pnpm test && pnpm test:db && pnpm eval --profile core` green. Tag `v0.1-demo`. (2026-11-07: typecheck, lint, test 44/44, test:db 6/6, eval core PASS 10/10)
 
 Commit `phase-8: deploy + docs + recording plan`.
 

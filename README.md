@@ -206,6 +206,9 @@ Rules:
 - 2026-11-07: `@opentelemetry/api`, `sdk-trace-node` and `exporter-trace-otlp-proto` are declared as direct dependencies of `agent/` at the exact ranges `@livekit/agents` already uses, so no new package enters the tree (pnpm strict mode needs the declaration to import them). CLAUDE.md's "none extra" holds in that sense.
 - 2026-11-07: Braintrust gets both layers: the SDK's OpenTelemetry spans over OTLP and manual `call` and `tool:*` spans; the exporter re-parents SDK spans under the call span because the job root span never leaves LiveKit's provider. Details in SDK notes and Gotchas below.
 
+- 2026-11-07: Deployed to LiveKit Cloud as agent `CA_mAZxE8eZW6PH` (`enroll-agent`, us-east) from a multi-stage `node:24-slim` image that installs only the `agent` and `db` workspace packages with `--frozen-lockfile --prod` and runs `node agent/src/agent.ts start` (no build step, no tsx: Node 24 strips types). `@livekit/agents` is also declared at the workspace root so `lk agent deploy` passes its preflight.
+- 2026-11-07: LiveKit Cloud text simulations run against the real Supabase database (the worker has no simulation-mode switch yet); the two scripted scenarios did not book anything.
+
 ## SDK notes
 
 Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-sdk` 2.19.2,
@@ -317,6 +320,11 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
 - `@opentelemetry/sdk-trace-node` 2.12.0 is marked deprecated on npm ("Use @opentelemetry/sdk-trace package"). `@livekit/agents` 1.9.5 still depends on it, so we stay on it to keep one copy of the SDK.
 - Duplicate tool rows: the SDK's own `function_tool` OTel span and our manual `tool:<name>` span both appear in the trace. The manual span carries the parsed arguments, the output and `durationMs` in a form the Braintrust UI shows directly.
 - Smoke test leftovers: six `call` traces with room names `scratch-<epoch ms>`, two standalone `agent_turn` traces, plus `slug-probe` and `probe_child` rows, are in project `movo-voice-demo` from the 2026-11-07 tracing check. Filter them out or delete them in the UI.
+
+- `lk agent create` preflight reads only the root `package.json` dependencies (or an npm lockfile) and said "@livekit/agents not found" for this pnpm workspace. Declaring `@livekit/agents` at the root fixes it; the first deploy went through a scratch copy with a stub `package-lock.json`.
+- A hand-rolled secrets parser kept an inline `# comment` as the value of an empty variable and every cloud job crashed on env validation. Build secrets files with Node's `util.parseEnv`, then `lk agent update-secrets --overwrite`.
+- A local `pnpm -F agent dev` worker and the cloud deployment register under the same `enroll-agent` name and share dispatch. Stop the local worker before judging the cloud agent.
+- The cloud simulation judge noted the agent answered a trial-availability question with the program's regular days instead of calling `check_trial_slots`; a prompt tuning candidate.
 
 ## Known gaps
 

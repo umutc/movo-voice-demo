@@ -1,0 +1,48 @@
+# Dependencies and build outputs (installed fresh in the image)
+node_modules
+**/node_modules
+**/dist
+web/.next
+coverage/
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+
+# Not needed by the worker
+web/*
+!web/package.json
+design/
+docs/
+metrics/
+eval/out/
+telephony/out/
+**/test/
+**/*.test.ts
+**/*.spec.ts
+
+# Logs and temp files
+*.log
+.DS_Store
+.tmp
+.cache
+
+# Docker, git, editor and agent files
+Dockerfile*
+.dockerignore
+.git
+.gitignore
+.idea
+.vscode
+.claude/
+.codex/
+.cursor/
+CLAUDE.md
+AGENTS.md
+README.md
+PRD.md
+TASKS.md
+
+# Preflight-only stub used for `lk agent create/deploy` (never installed)
+package-lock.json
