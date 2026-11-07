@@ -1,8 +1,27 @@
 # Deploying web/ to AWS Amplify Hosting (WEB_COMPUTE)
 
-Prototype setup, not production. The build spec is `amplify.yml` at the repo root. Nothing here
-was run against a real Amplify app: the YAML was parsed, the commands were not executed on
-Amplify.
+Prototype setup, not production. The build spec is `amplify.yml` at the repo root. See the Amplify section for the setup that deployed.
+
+## Amplify (what finally worked, 2026-11-07)
+
+Deployed on app `dall2asqwbqvd`, branch `main`, job 11 (commit `5f28267`) SUCCEED. The notes
+below supersede the plan and risks further down where they disagree.
+
+- Monorepo mode with `appRoot: web` and `buildPath: /`. Commands start in the parent of the
+  checkout, so each command runs `cd "$(git rev-parse --show-toplevel)"` first.
+  `artifacts.baseDirectory` stays `.next` (relative to appRoot, not buildPath).
+- pnpm 12 reads the linker from `pnpm-workspace.yaml` (`nodeLinker: hoisted`), not `.npmrc` or
+  `--config.node-linker`. The build appends that line before `pnpm install --frozen-lockfile`.
+  The line is written with `printf '...nodeLinker%s hoisted...' ':'`: a literal `: ` in a plain
+  YAML command makes Amplify reject the buildspec as malformed (job 10).
+- Amplify packaging needs `web/node_modules/next` as a real directory. After `pnpm build` the
+  spec copies the hoisted root `node_modules` into `web/node_modules` with `cp -a` (no rsync on
+  the image) and copies `db` in. `postgres` then resolves at runtime: `/api/calls/<id>` returns
+  200 on a real id and 404 on an unknown one.
+- `next/font` failed to fetch fonts on the build image; fonts load from a Google Fonts `<link>`.
+- No build cache block: the cache passed the 5 GB limit.
+- Checks after job 11: `/` 200 with the app title, `POST /api/token` with `{}` 400 (Zod
+  message), custom domain `movo-voice-demo.umutcelik.com.tr` AVAILABLE and serving 200.
 
 ## What the docs say (checked 2026-11-07)
 
