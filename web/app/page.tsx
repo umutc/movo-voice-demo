@@ -1,5 +1,8 @@
 import { App } from '@/components/app/app';
 
+// Read env at request time (Cloudflare secrets), not at build time.
+export const dynamic = 'force-dynamic';
+
 // Server component: reads env once and hands plain values to the client shell. Secrets stay
 // server-side; the token endpoint mints tokens.
 export default function Page() {

@@ -209,6 +209,8 @@ Rules:
 - 2026-11-07: Deployed to LiveKit Cloud as agent `CA_mAZxE8eZW6PH` (`enroll-agent`, us-east) from a multi-stage `node:24-slim` image that installs only the `agent` and `db` workspace packages with `--frozen-lockfile --prod` and runs `node agent/src/agent.ts start` (no build step, no tsx: Node 24 strips types). `@livekit/agents` is also declared at the workspace root so `lk agent deploy` passes its preflight.
 - 2026-11-07: LiveKit Cloud text simulations run against the real Supabase database (the worker has no simulation-mode switch yet); the two scripted scenarios did not book anything.
 
+- 2026-11-07: `web/` builds for Cloudflare Workers with `@opennextjs/cloudflare` (`pnpm -F web cf:build`, worker `movo-voice-demo-web`, `nodejs_compat`); `workerd` was added to the pnpm build allowlist because its postinstall fetches the runtime binary. postgres.js 3.4 has a Workers entry; the route still has to be proven against the real database after the first deploy. Steps and env names: `web/README-cloudflare.md`.
+
 ## SDK notes
 
 Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-sdk` 2.19.2,

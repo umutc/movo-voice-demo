@@ -8,7 +8,7 @@ import { z } from 'zod';
 // attribute or metadata update permission, so the client cannot change them after joining.
 // Trust level stays `self_reported` on the agent side.
 
-export const ATTR = {
+const ATTR = {
   guardianName: 'movo.guardian_name',
   phone: 'movo.phone',
   email: 'movo.email',

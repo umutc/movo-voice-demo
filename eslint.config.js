@@ -2,7 +2,7 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/node_modules/**', '**/dist/**', 'web/.next/**', 'web/next-env.d.ts', 'design/**', 'metrics/**', 'telephony/out/**'] },
+  { ignores: ['**/node_modules/**', '**/dist/**', 'web/.next/**', 'web/.open-next/**', 'web/.wrangler/**', 'web/next-env.d.ts', 'design/**', 'metrics/**', 'telephony/out/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
