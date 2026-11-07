@@ -14,10 +14,10 @@ Status legend: `[ ]` todo, `[x]` done and verified, `[~]` reported by human, not
 
 Reported by human (mark `[~]`), verified by agent (mark `[x]` after the Verify command passes without printing secrets):
 
-- [~] `[MANUAL]` LiveKit Cloud project `movo-voice-demo`, Build plan, recordings and insights enabled. Verify: `lk project list` shows it; a token can be minted with the server SDK. (2026-11-07: `lk project list` shows it; token mint and the recordings/insights toggles not yet verified)
+- [x] `[MANUAL]` LiveKit Cloud project `movo-voice-demo`, Build plan, recordings and insights enabled. Verify: `lk project list` shows it; a token can be minted with the server SDK. (2026-11-07: listed; a hand-minted JWT called RoomService/ListRooms with HTTP 200; recordings and insights enabled as reported by Umut, checked in the dashboard in Phase 8)
 - [x] `[MANUAL]` `brew install livekit-cli`, `lk cloud auth`. Verify: `lk project list`. (2026-11-07: lk 2.19.3, project listed, LIVEKIT_* copied from the CLI config into .env)
-- [~] `[MANUAL]` Supabase project (free): pooler URL in `DATABASE_URL`, direct URL in `DIRECT_DATABASE_URL`. Verify: `select 1` through both. (2026-11-07: project created via MCP, password reset via browser, URLs in .env, schema `test` created; direct host is IPv6-only so `DIRECT_DATABASE_URL` points at the session pooler; `select 1` runs in Phase 1 once postgres.js is installed) For `TEST_DATABASE_URL` either a separate schema on the same project (set `search_path`) or a local Postgres container; the agent may set this up itself.
-- [~] `[MANUAL]` Braintrust account, project `movo-voice-demo`, `BRAINTRUST_API_KEY`. Verify: log one test span. (2026-11-07: key accepted by `GET /v1/project`, HTTP 200; span test runs in Phase 1 once the SDK is installed)
+- [x] `[MANUAL]` Supabase project (free): pooler URL in `DATABASE_URL`, direct URL in `DIRECT_DATABASE_URL`. Verify: `select 1` through both. (2026-11-07: project created via MCP, password reset via browser, `select 1` ok on all three URLs, `TEST_DATABASE_URL` resolves `current_schema() = test`; direct host is IPv6-only so `DIRECT_DATABASE_URL` is the session pooler) For `TEST_DATABASE_URL` either a separate schema on the same project (set `search_path`) or a local Postgres container; the agent may set this up itself.
+- [x] `[MANUAL]` Braintrust account, project `movo-voice-demo`, `BRAINTRUST_API_KEY`. Verify: log one test span. (2026-11-07: span `phase0-verify` logged and flushed with the SDK)
 - [~] `[MANUAL]` `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` for eval judge and simulated caller. Verify: one tiny completion. (2026-11-07: key valid, `GET /v1/models` 200 and gpt-6.1-terra, gpt-6-luna listed; a completion returned 429 "account is not active, check billing". Blocks Phase 3 judge tests and Phase 6 until billing is added)
 - [x] Node 24 LTS and pnpm 12 via mise: after Phase 1 creates `mise.toml`, run `mise install` in the repo (until then `mise use -g node@24 pnpm@12` is fine). Verify: `mise current` shows node 24.x and pnpm 12.x; `node -v`, `pnpm -v`. (2026-11-07: node 24.22.1, pnpm 12.18.0)
 - [ ] (Only for Phase 9 / stretch) `[MANUAL]` Twilio trial, both demo phones as Verified Caller IDs, trial number, SID, auth token. Not required for core.
@@ -26,12 +26,12 @@ Done when: `.env` has every core variable from `.env.example`; feature flags def
 
 ## Phase 1: Repo scaffold and hello-world agent (Saturday 09:00, 90 min)
 
-- [ ] pnpm workspace: `agent/`, `db/`, `eval/`, `scripts/`, `telephony/`, `web/` (web created in Phase 4). Root scripts from CLAUDE.md. TypeScript 5.9 strict, ESM, `tsx`, Vitest 4. Install exactly the pinned versions from CLAUDE.md (all `@livekit/agents*` at the same exact version), `mise.toml` with node 24 and pnpm 12, `packageManager` field, `.npmrc` with `engine-strict=true`, commit `pnpm-lock.yaml`, run `pnpm audit --prod` and record the result in README.
-- [ ] `agent/src/config.ts`: Zod env with feature flags; Twilio variables required only when `FEATURE_SMS` or `FEATURE_OUTBOUND` is true.
-- [ ] Read `node_modules/@livekit/agents` types and agents-js examples. Write README "SDK notes": installed version, agent definition, tool registration, `AgentSession` config, console/text mode availability, testing API (`session.run`), `ChatMessage.metrics` fields, OTel export availability.
-- [ ] `agent/src/agent.ts`: minimal agent named `AGENT_NAME` with LiveKit Inference STT, LLM, TTS from env (ids verified on docs.livekit.io/agents/models), VAD + turn detection, greeting on join.
-- [ ] `agent/src/ports/`: `DbPort`, `SmsPort`, `DialPort` interfaces; fakes for all three; real adapters stubbed for now.
-- [ ] Verify: `pnpm -F agent dev` connects without errors; a playground conversation gets a spoken reply. `pnpm typecheck` green.
+- [x] pnpm workspace: `agent/`, `db/`, `eval/`, `scripts/`, `telephony/`, `web/` (web created in Phase 4). Root scripts from CLAUDE.md. TypeScript 5.9 strict, ESM, `tsx`, Vitest 4. Install exactly the pinned versions from CLAUDE.md (all `@livekit/agents*` at the same exact version), `mise.toml` with node 24 and pnpm 12, `packageManager` field, `.npmrc` with `engine-strict=true`, commit `pnpm-lock.yaml`, run `pnpm audit --prod` and record the result in README.
+- [x] `agent/src/config.ts`: Zod env with feature flags; Twilio variables required only when `FEATURE_SMS` or `FEATURE_OUTBOUND` is true.
+- [x] Read `node_modules/@livekit/agents` types and agents-js examples. Write README "SDK notes": installed version, agent definition, tool registration, `AgentSession` config, console/text mode availability, testing API (`session.run`), `ChatMessage.metrics` fields, OTel export availability.
+- [x] `agent/src/agent.ts`: minimal agent named `AGENT_NAME` with LiveKit Inference STT, LLM, TTS from env (ids verified on docs.livekit.io/agents/models), VAD + turn detection, greeting on join.
+- [x] `agent/src/ports/`: `DbPort`, `SmsPort`, `DialPort` interfaces; fakes for all three; real adapters stubbed for now. (DbPort interface lives in `db/port.ts`; its fake arrives with the seed data in Phase 2)
+- [x] Verify: `pnpm -F agent dev` connects without errors; a playground conversation gets a spoken reply. `pnpm typecheck` green. (2026-11-07: worker registered as enroll-agent; `lk agent debugger` text and audio sessions got replies; typecheck, lint and `pnpm audit --prod` clean)
 
 Commit `phase-1: scaffold + hello agent + ports`.
 

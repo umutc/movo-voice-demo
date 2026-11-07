@@ -1,0 +1,22 @@
+packages:
+  - agent
+  - db
+  - eval
+  - scripts
+  - web
+
+# Build scripts reviewed on 2026-11-07 (README Gotchas). false entries stay blocked on purpose.
+allowBuilds:
+  '@livekit/blingfire': true
+  '@livekit/local-inference': true
+  esbuild: true
+  onnxruntime-node: true
+  protobufjs: true
+  sharp: true
+  braintrust: false
+  autoevals: false
+
+# Audit overrides (2026-11-07): moderate advisories in transitive deps, patched versions exist.
+overrides:
+  glob: '>=14.0.2'
+  minimatch: '>=11.0.1'

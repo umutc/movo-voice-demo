@@ -1,0 +1,14 @@
+{
+  "name": "eval",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "agent": "workspace:*",
+    "autoevals": "^0.4.1",
+    "braintrust": "^3.43.0",
+    "db": "workspace:*",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  }
+}

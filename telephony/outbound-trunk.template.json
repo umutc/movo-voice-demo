@@ -1,0 +1,9 @@
+{
+  "trunk": {
+    "name": "movo-twilio-outbound",
+    "address": "${TWILIO_SIP_TERMINATION_URI}",
+    "numbers": ["${TWILIO_FROM_NUMBER}"],
+    "authUsername": "${TWILIO_SIP_USERNAME}",
+    "authPassword": "${TWILIO_SIP_PASSWORD}"
+  }
+}

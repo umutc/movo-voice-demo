@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./db"
+    },
+    {
+      "path": "./agent"
+    },
+    {
+      "path": "./scripts"
+    }
+  ]
+}

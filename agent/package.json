@@ -1,0 +1,22 @@
+{
+  "name": "agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file=../.env ../node_modules/tsx/dist/cli.mjs src/agent.ts dev",
+    "start": "node --env-file=../.env ../node_modules/tsx/dist/cli.mjs src/agent.ts start",
+    "console": "node --env-file=../.env ../node_modules/tsx/dist/cli.mjs src/agent.ts console",
+    "download-files": "node ../node_modules/tsx/dist/cli.mjs src/agent.ts download-files"
+  },
+  "dependencies": {
+    "@livekit/agents": "1.9.5",
+    "@livekit/rtc-node": "^1.2.1",
+    "@modelcontextprotocol/client": "^2.3.1",
+    "braintrust": "^3.43.0",
+    "db": "workspace:*",
+    "libphonenumber-js": "^1.13.15",
+    "livekit-server-sdk": "^2.19.2",
+    "zod": "^4.6.7"
+  }
+}

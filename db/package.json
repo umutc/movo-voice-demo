@@ -1,0 +1,26 @@
+{
+  "name": "db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./schema": "./schema.ts",
+    "./fake": "./fake.ts",
+    "./seed-data": "./seed-data.ts",
+    "./port": "./port.ts"
+  },
+  "scripts": {
+    "generate": "node --env-file=../.env ../node_modules/.bin/drizzle-kit generate",
+    "migrate": "node --env-file=../.env ../node_modules/tsx/dist/cli.mjs migrate.ts",
+    "seed": "node --env-file=../.env ../node_modules/tsx/dist/cli.mjs seed.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.4",
+    "postgres": "^3.4.9",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.11"
+  }
+}

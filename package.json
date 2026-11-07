@@ -1,0 +1,32 @@
+{
+  "name": "movo-voice-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=24 <27"
+  },
+  "scripts": {
+    "typecheck": "tsc -b tsconfig.json",
+    "lint": "eslint .",
+    "test": "node --env-file-if-exists=.env ./node_modules/vitest/vitest.mjs run --project agent",
+    "test:db": "node --env-file=.env ./node_modules/vitest/vitest.mjs run --project db",
+    "eval": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs eval/run.ts",
+    "report:latency": "node --env-file-if-exists=.env ./node_modules/tsx/dist/cli.mjs scripts/report-latency.ts",
+    "call": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/call.ts",
+    "db:generate": "pnpm -F db generate",
+    "db:migrate": "pnpm -F db migrate",
+    "db:seed": "pnpm -F db seed",
+    "telephony:render": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/render-telephony.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@types/node": "^24.10.0",
+    "eslint": "^9.39.0",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.48.0",
+    "vitest": "^4.1.12"
+  }
+}

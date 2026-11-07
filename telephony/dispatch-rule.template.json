@@ -1,0 +1,15 @@
+{
+  "name": "movo-inbound",
+  "rule": {
+    "dispatchRuleIndividual": {
+      "roomPrefix": "call-"
+    }
+  },
+  "roomConfig": {
+    "agents": [
+      {
+        "agentName": "${AGENT_NAME}"
+      }
+    ]
+  }
+}
