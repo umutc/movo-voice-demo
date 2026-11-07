@@ -37,10 +37,6 @@ export function buildEnrollmentAgent(sc: SessionContext, opts: AgentBuildOptions
           : 'Greet the caller in one short sentence, say you are an AI assistant, and ask how you can help with enrollment.',
       });
     },
-    onUserTurnCompleted: async (_ctx, _chatCtx, newMessage) => {
-      // Drives the proposal state machine: the user turn right after the read-back decides it.
-      await sc.proposals.onUserTurn(newMessage.textContent, sc.judge);
-    },
   });
 }
 
@@ -50,6 +46,10 @@ export function wireSessionEvents(session: AgentSession<SessionContext>, sc: Ses
     const item = ev.item;
     if (item.type === 'message' && item.role === 'assistant') {
       sc.proposals.onAssistantMessage(item.textContent, item.interrupted);
+    } else if (item.type === 'message' && item.role === 'user') {
+      // The user turn right after the read-back decides the proposal. The onUserTurnCompleted
+      // hook does not fire for text input (session.run), so the committed-message event is used.
+      sc.proposals.onUserMessage(item.id, item.textContent, sc.judge);
     }
   });
   session.on(AgentSessionEventTypes.FunctionToolsExecuted, (ev) => {

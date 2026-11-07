@@ -15,7 +15,7 @@ tiers). It is not production software.
 | 0 Accounts and local setup | done, OpenAI billing pending | `3d3df1f` |
 | 1 Scaffold and hello-world agent | done | see git log |
 | 2 Database | done | see git log |
-| 3 Context, tools, prompt, memory | todo | |
+| 3 Context, tools, prompt, memory | done, summary hook re-checked in Phase 4 | see git log |
 | 4 Browser demo | todo | |
 | 5 Interruption, metrics, tracing | todo | |
 | 6 Scenario eval | todo | |
@@ -73,6 +73,11 @@ lk agent debugger stop --chat-history
 - 2026-11-07: `config.ts` loads the repo `.env` itself when LiveKit variables are absent, so `lk agent dev|console|debugger` work without `--env-file`.
 - 2026-11-07: Build scripts allowed in `pnpm-workspace.yaml` after reading each script: esbuild, protobufjs, sharp, @livekit/blingfire, @livekit/local-inference. `braintrust` (downloads a `bt` CLI binary) and `autoevals` (pnpm guard) stay blocked; the SDKs work without their scripts.
 
+- 2026-11-07: The read-back affirmation is classified by a small LLM call (`makeLlmAffirmationJudge`, one word YES/NO/OTHER) only on the user turn right after the read-back; a failed call counts as not confirmed. No keyword matching in production code. Behavior tests inject a scripted judge for determinism; the LLM judge has its own test.
+- 2026-11-07: The proposal machine is driven from the public `conversation_item_added` event (assistant and user messages) and `function_tools_executed`, not from the `onUserTurnCompleted` hook, because that hook does not fire for text input (`session.run`, debugger). `book_trial_class` awaits the in-flight verdict (`proposals.settle()`), with a 1.5 s grace window for the user-message event.
+- 2026-11-07: `CONSOLE_SIMULATE_SIP_PHONE` is a dev-only knob honored only for fake jobs (`lk agent console|debugger`, no room) so the returning-family path can be exercised without a phone. It is ignored whenever a real participant exists.
+- 2026-11-07: Supabase RLS enabled on every table in `public` and `test` without policies. The app connects as the table owner (`postgres`), which bypasses RLS; the default `anon` and `authenticated` PostgREST roles are blocked. The Supabase MCP flagged the open tables as critical.
+
 ## SDK notes
 
 Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-sdk` 2.19.2,
@@ -104,6 +109,17 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
   is possible without extra packages (checked in Phase 5).
 - Participant kind: `@livekit/rtc-node` `ParticipantKind.SIP` (3); SIP attributes arrive as
   `participant.attributes['sip.phoneNumber']`.
+- Lifecycle: `defineAgent({ onSessionEnd })` runs after the primary session closes and the worker
+  waits for it (default `sessionEndTimeout` 300 s); the summary and call row are written there.
+  `session.shutdown()` closes the session only; the job ends when `ctx.shutdown()` is called, so
+  the `close` event handler calls it.
+- Tool filler: `ctx.filler('One moment...', { delay }, fn)` on the tool `RunContext` speaks only if
+  the session stays idle for `delay` ms, so fast tools stay silent.
+- Testing API: `session.run({ userInput }).wait()`; `result.expect.at(-1).isMessage({ role }).judge(llm, { intent })`;
+  `containsFunctionCall({ name, args })` matches an argument subset. `nextEvent({ type })` returns a
+  plain `EventAssert` without `judge`.
+- Console and debugger: `ctx.isFakeJob` is true, `ctx.connect()` is a no-op and there is no remote
+  participant; `waitForParticipant()` would hang.
 
 ## Gotchas
 
@@ -129,6 +145,14 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
   schema already exists. Harmless.
 - The `test` schema once had foreign keys to `public` tables (first migration, before the sed
   fix). Fixed by dropping and recreating the schema, then migrating again.
+
+- `lk agent debugger` ends the agent process as soon as the session closes, before `onSessionEnd`
+  and the shutdown callbacks run, so end-of-call writes cannot be observed there. Use a real room.
+- `lk agent debugger say` on a text turn never fires `onUserTurnCompleted`; events do.
+- `libphonenumber-js` `isValid()` rejects the synthetic `555` numbers used in seeds and tests;
+  `isPossible()` is used instead (caller id is never trusted as verification anyway).
+- Shell trap: a `.env` line with a trailing `# comment` is parsed correctly by `node --env-file`,
+  but `cut -d= -f2` in a shell keeps the comment. Read env values through node.
 
 ## Known gaps
 

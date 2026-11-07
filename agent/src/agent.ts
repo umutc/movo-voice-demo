@@ -11,7 +11,7 @@ import {
 import { fileURLToPath } from 'node:url';
 import { openDb } from 'db';
 import { loadConfig, splitTtsModel } from './config.ts';
-import { resolveIdentity, SessionContext } from './context.ts';
+import { ATTR, PARTICIPANT_KIND_SIP, resolveIdentity, SessionContext } from './context.ts';
 import { closeCall, makeLlmAffirmationJudge, openCall } from './memory.ts';
 import { FakeDialPort, FakeSmsPort } from './ports/index.ts';
 import { buildEnrollmentAgent, wireSessionEvents } from './session.ts';
@@ -20,7 +20,13 @@ import { buildEnrollmentAgent, wireSessionEvents } from './session.ts';
 // dispatch metadata), the family is bound once here, tools read it from the session context.
 // Real ports are wired here only; tests and evals use fakes (CLAUDE.md hard rule 6).
 
+// Finalizers keyed by job, run from onSessionEnd (the worker waits for it) or job shutdown.
+const finalizers = new WeakMap<JobContext, (reason: string) => Promise<void>>();
+
 export default defineAgent({
+  onSessionEnd: async (ctx: JobContext) => {
+    await finalizers.get(ctx)?.('session end');
+  },
   entry: async (ctx: JobContext) => {
     const cfg = loadConfig();
     const logger = log();
@@ -30,9 +36,13 @@ export default defineAgent({
     // Console and debugger sessions are fake jobs without a remote participant: treat them as a
     // self-reported browser session with no attributes.
     const participant = ctx.isFakeJob ? null : await ctx.waitForParticipant();
+    // Dev-only knob for console and debugger sessions (fake jobs, no room): pretend the caller id
+    // is CONSOLE_SIMULATE_SIP_PHONE so returning-family memory can be exercised without a phone.
+    // Never consulted when a real participant exists.
+    const simulatedSip = ctx.isFakeJob ? process.env.CONSOLE_SIMULATE_SIP_PHONE?.trim() : undefined;
     const identity = resolveIdentity({
-      participantKind: participant?.kind ?? null,
-      attributes: participant?.attributes ?? {},
+      participantKind: participant?.kind ?? (simulatedSip ? PARTICIPANT_KIND_SIP : null),
+      attributes: participant?.attributes ?? (simulatedSip ? { [ATTR.sipPhone]: simulatedSip } : {}),
       jobMetadata: ctx.job.metadata || null,
     });
     const direction = identity.source === 'caller_id_only' ? 'inbound' : identity.reason === 'follow_up' ? 'outbound' : 'browser';
@@ -78,15 +88,24 @@ export default defineAgent({
     });
     wireSessionEvents(session, sc);
 
+    // Summary + call row finish run once, whichever comes first: session close or job shutdown.
+    let finalized: Promise<void> | null = null;
+    const finalize = (reason: string): Promise<void> => {
+      finalized ??= (async () => {
+        const { summary, error } = await closeCall(sc, llmModel, session.history.items);
+        logger.info({ reason, outcome: sc.outcome, summaryWritten: Boolean(summary), error, usage: session.usage }, 'call closed');
+        await closeDb();
+      })();
+      return finalized;
+    };
+    finalizers.set(ctx, finalize);
     session.on(AgentSessionEventTypes.Close, (ev) => {
       logger.info({ reason: ev.reason, room: ctx.room.name }, 'session closed');
+      // End the job when the session ends (end_call, caller hung up, error). The worker then runs
+      // onSessionEnd (summary + call row) and the shutdown callbacks before it disconnects.
+      ctx.shutdown(`session closed: ${String(ev.reason)}`);
     });
-
-    ctx.addShutdownCallback(async () => {
-      const { summary, error } = await closeCall(sc, llmModel, session.history.items);
-      logger.info({ outcome: sc.outcome, summaryWritten: Boolean(summary), error, usage: session.usage }, 'call closed');
-      await closeDb();
-    });
+    ctx.addShutdownCallback(() => finalize('job shutdown'));
 
     await session.start({ agent, room: ctx.room });
   },

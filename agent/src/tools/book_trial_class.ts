@@ -14,6 +14,7 @@ export const bookTrialClass = tool({
   }),
   execute: async ({ program_id, slot_id, child_name }, { ctx }) => {
     const sc = ctx.userData as SessionContext;
+    await sc.proposals.settle();
     const refusal = sc.proposals.authorize({ programId: program_id, slotId: slot_id, childName: child_name });
     if (refusal) {
       sc.logTool('book_trial_class', false, `refused: ${refusal}`);

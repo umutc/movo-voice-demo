@@ -147,6 +147,9 @@ export class ProposalMachine {
   current: Proposal | null = null;
   readonly history: ProposalEvent[] = [];
   private seq = 0;
+  /** In-flight verdict for the user turn after the read-back; tools await it via settle(). */
+  private pending: Promise<Affirmation | null> | null = null;
+  private readonly seenUserItems = new Set<string>();
 
   propose(details: ProposalDetails, readbackText: string): Proposal {
     if (this.current && (this.current.state === 'pending' || this.current.state === 'readback_spoken' || this.current.state === 'confirmed')) {
@@ -187,6 +190,28 @@ export class ProposalMachine {
   onToolExecuted(toolName: string): void {
     const p = this.current;
     if (p && p.state === 'readback_spoken') this.transition('cleared', `tool ${toolName} ran after the read-back`);
+  }
+
+  /**
+   * Committed user message from the session (fires in text and audio mode). Starts the verdict
+   * without blocking the pipeline; `book_trial_class` awaits it through settle().
+   */
+  onUserMessage(itemId: string, userText: string | undefined, judge: AffirmationJudge): void {
+    if (this.seenUserItems.has(itemId)) return;
+    this.seenUserItems.add(itemId);
+    if (!this.current || (this.current.state !== 'pending' && this.current.state !== 'readback_spoken')) return;
+    this.pending = this.onUserTurn(userText, judge).finally(() => {
+      this.pending = null;
+    });
+  }
+
+  /** Waits for an in-flight verdict. Gives the user-message event a short grace period to arrive. */
+  async settle(graceMs = 1500): Promise<void> {
+    const start = Date.now();
+    while (!this.pending && this.current?.state === 'readback_spoken' && Date.now() - start < graceMs) {
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    if (this.pending) await this.pending;
   }
 
   /** The user's turn right after the read-back decides the proposal. */
