@@ -37,13 +37,13 @@ Commit `phase-1: scaffold + hello agent + ports`.
 
 ## Phase 2: Database (Saturday 10:30, 60 min)
 
-- [ ] `db/schema.ts` per PRD section 8, including `families.is_demo`, `bookings` unique (child_id, slot_id), `calls.identity_source`.
-- [ ] Drizzle config: app connection via pooler with `prepare: false`; migrations via `DIRECT_DATABASE_URL`. Generate and apply the migration.
-- [ ] `db/seed.ts`: 5 programs, 2 locations, prices, coaches, 3 to 5 open slots per program in the next 14 days, one demo family (`is_demo = true`, phone `DEMO_RETURNING_PHONE`, summary, prior inquiry).
-- [ ] `db/index.ts` real `DbPort` adapter: `findFamilyByPhone`, `createFamily`, `upsertFamilySummary`, `findOrCreateChild(familyId, name, age)` (normalized name match), `listPrograms(age)`, `listOpenSlots(programId)`, `bookTrialClass` (single transaction in this order: lock slot row, return existing booking for (child, slot) if any, capacity check only for a new booking, insert with ON CONFLICT DO NOTHING, increment only on insert), `createCallbackRequest`, `insertCall`, `finishCall`.
-- [ ] `db/fake.ts`: in-memory `DbPort` with the same semantics, seeded from the same seed data, resettable.
-- [ ] `db/test/*.test.ts` (`pnpm test:db`, isolated `TEST_DATABASE_URL`, reset per test): two concurrent bookings for the last seat produce one booking and `booked_count == capacity`; repeat request on a full slot returns the original booking; a different child on a full slot is refused; `findOrCreateChild` is stable for the same normalized name.
-- [ ] Verify: `pnpm db:migrate && pnpm db:seed`; a smoke script lists programs for age 7; `pnpm test:db` green; the same cases pass against the fake in `pnpm test`.
+- [x] `db/schema.ts` per PRD section 8, including `families.is_demo`, `bookings` unique (child_id, slot_id), `calls.identity_source`.
+- [x] Drizzle config: app connection via pooler with `prepare: false`; migrations via `DIRECT_DATABASE_URL`. Generate and apply the migration.
+- [x] `db/seed.ts`: 5 programs, 2 locations, prices, coaches, 3 to 5 open slots per program in the next 14 days, one demo family (`is_demo = true`, phone `DEMO_RETURNING_PHONE`, summary, prior inquiry).
+- [x] `db/index.ts` real `DbPort` adapter: `findFamilyByPhone`, `createFamily`, `upsertFamilySummary`, `findOrCreateChild(familyId, name, age)` (normalized name match), `listPrograms(age)`, `listOpenSlots(programId)`, `bookTrialClass` (single transaction in this order: lock slot row, return existing booking for (child, slot) if any, capacity check only for a new booking, insert with ON CONFLICT DO NOTHING, increment only on insert), `createCallbackRequest`, `insertCall`, `finishCall`.
+- [x] `db/fake.ts`: in-memory `DbPort` with the same semantics, seeded from the same seed data, resettable.
+- [x] `db/test/*.test.ts` (`pnpm test:db`, isolated `TEST_DATABASE_URL`, reset per test): two concurrent bookings for the last seat produce one booking and `booked_count == capacity`; repeat request on a full slot returns the original booking; a different child on a full slot is refused; `findOrCreateChild` is stable for the same normalized name.
+- [x] Verify: `pnpm db:migrate && pnpm db:seed`; a smoke script lists programs for age 7; `pnpm test:db` green; the same cases pass against the fake in `pnpm test`. (2026-11-07: migration 0000 applied to `public` and `test`; seed 5 programs, 21 slots, demo family; `pnpm db:smoke` lists Juniors U8 with 3 open slots; `pnpm test:db` 6/6 in 15.8 s; `pnpm test` 6/6 on the fake)
 
 Commit `phase-2: db schema + seed + DbPort + db integration tests`.
 

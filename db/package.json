@@ -8,12 +8,15 @@
     "./schema": "./schema.ts",
     "./fake": "./fake.ts",
     "./seed-data": "./seed-data.ts",
-    "./port": "./port.ts"
+    "./port": "./port.ts",
+    "./seed": "./seed.ts",
+    "./client": "./client.ts"
   },
   "scripts": {
-    "generate": "node --env-file=../.env ../node_modules/.bin/drizzle-kit generate",
+    "generate": "drizzle-kit generate && sed -i '' 's/\"public\"\\.//g' migrations/*.sql",
     "migrate": "node --env-file=../.env ../node_modules/tsx/dist/cli.mjs migrate.ts",
-    "seed": "node --env-file=../.env ../node_modules/tsx/dist/cli.mjs seed.ts"
+    "seed": "node --env-file=../.env ../node_modules/tsx/dist/cli.mjs seed.ts",
+    "smoke": "node --env-file=../.env ../node_modules/tsx/dist/cli.mjs smoke.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",

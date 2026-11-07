@@ -14,7 +14,7 @@ tiers). It is not production software.
 |---|---|---|
 | 0 Accounts and local setup | done, OpenAI billing pending | `3d3df1f` |
 | 1 Scaffold and hello-world agent | done | see git log |
-| 2 Database | todo | |
+| 2 Database | done | see git log |
 | 3 Context, tools, prompt, memory | todo | |
 | 4 Browser demo | todo | |
 | 5 Interruption, metrics, tracing | todo | |
@@ -22,8 +22,9 @@ tiers). It is not production software.
 | 7 Inbound phone | todo | |
 | 8 Hardening, deploy, docs | todo | |
 
-Verified end to end so far: LiveKit worker registration, a text-mode conversation through
-`lk agent debugger`, database connectivity, one Braintrust span.
+Verified end to end so far: LiveKit worker registration, text and audio conversations through
+`lk agent debugger`, migrations, seed and booking semantics on real Postgres (`pnpm test:db`), one
+Braintrust span.
 
 ## Architecture
 
@@ -118,6 +119,16 @@ Installed: `@livekit/agents` 1.9.5, `@livekit/rtc-node` 1.2.1, `livekit-server-s
 - The Chrome-driven Supabase password reset: a first attempt leaked the generated password into a
   tool log because of a shell piping mistake, so the password was reset a second time. The live
   password exists only in `.env`.
+
+- drizzle-kit 0.31 writes `REFERENCES "public"."families"` into generated SQL, which pins foreign
+  keys to `public` even when the migration runs in the `test` schema. `pnpm db:generate` strips the
+  `"public".` qualifier with `sed` after generating; re-check any new migration for it.
+- `pnpm -F db <script>`: workspace bins live in `db/node_modules/.bin`, not the root. Call
+  `drizzle-kit` by name in the package script, not by path.
+- `drizzle-orm` `migrate()` prints a NOTICE object (`CreateSchemaCommand`) when the migrations
+  schema already exists. Harmless.
+- The `test` schema once had foreign keys to `public` tables (first migration, before the sed
+  fix). Fixed by dropping and recreating the schema, then migrating again.
 
 ## Known gaps
 
