@@ -8,17 +8,7 @@ import type { NextConfig } from 'next';
 const rootEnv = resolve(process.cwd(), '..', '.env');
 if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 
-// The Amplify build copies only a fixed list of variables into .env.production (amplify.yml), so
-// the console password and feature flags are inlined at build time instead. Only server code and
-// the middleware read them; no client component references these names.
-const buildTimeEnv: Record<string, string> = {};
-for (const name of ['CONSOLE_PASSWORD', 'FEATURE_SMS', 'FEATURE_OUTBOUND']) {
-  const v = process.env[name];
-  if (v !== undefined) buildTimeEnv[name] = v;
-}
-
 const nextConfig: NextConfig = {
-  env: buildTimeEnv,
   transpilePackages: ['db'],
   serverExternalPackages: ['postgres'],
 };

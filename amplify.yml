@@ -22,7 +22,7 @@ applications:
         build:
           commands:
             # SSR runtime only sees variables written to .env.production at build time.
-            - cd "$(git rev-parse --show-toplevel)/web" && pwd && env | grep -E '^(LIVEKIT_|DATABASE_URL|AGENT_NAME|ALLOW_TOKEN_ROUTE|DEMO_|LK_|NEXT_PUBLIC_)' >> .env.production && pnpm build
+            - cd "$(git rev-parse --show-toplevel)/web" && pwd && env | grep -E '^(LIVEKIT_|DATABASE_URL|AGENT_NAME|ALLOW_TOKEN_ROUTE|DEMO_|LK_|CONSOLE_PASSWORD|FEATURE_|NEXT_PUBLIC_)' >> .env.production && pnpm build
             # Amplify packages web/node_modules at deploy time; the hoisted install lives at the root, so copy it in.
             - cd "$(git rev-parse --show-toplevel)" && rm -rf web/node_modules && cp -a node_modules web/node_modules && rm -rf web/node_modules/db && cp -a db web/node_modules/db && ls web/node_modules/next/package.json
       artifacts:
