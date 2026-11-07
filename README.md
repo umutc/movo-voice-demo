@@ -19,7 +19,7 @@ tiers). It is not production software.
 | 4 Browser demo | done | see git log |
 | 5 Interruption, metrics, tracing | done | see git log |
 | 6 Scenario eval | done | see git log |
-| 7 Inbound phone | done, first call verified, second phone cut | see git log |
+| 7 Inbound phone | done, two calls from one phone | see git log |
 | 8 Hardening, deploy, docs | in progress: deploy running, docs | see git log |
 
 Phase 7: number +1 929 428 8103 bought, dispatch rule created, rule assignment and the phone test
