@@ -15,7 +15,7 @@ export default async function CallbacksPage({ searchParams }: { searchParams: Pr
     <>
       <PageHeader
         title="Callbacks"
-        lead={`Questions ${persona} could not answer from the schedule. A coach calls back; ${persona} never promises a price or policy. ${callbacks.length} in the queue.`}
+        lead={`Questions ${persona} could not answer from the schedule, saved as callback requests. Nothing notifies staff yet and requests have no status. ${callbacks.length} ${callbacks.length === 1 ? 'request' : 'requests'} on record.`}
       />
       <div className="flex flex-wrap items-start gap-5">
         <section className="card flex min-w-0 flex-[999_1_560px] flex-col overflow-x-auto">

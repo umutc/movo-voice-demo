@@ -2,15 +2,14 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Track } from 'livekit-client';
-import { useAgent, useSessionContext, type UseSessionMessagesReturn, useTextStream, useTrackToggle } from '@livekit/components-react';
+import { useAgent, useMultibandTrackVolume, useSessionContext, type UseSessionMessagesReturn, useTextStream, useTrackToggle } from '@livekit/components-react';
 import { attachToolsToTurns, proposalSummaryParts, toolDetail } from '@/lib/call-format';
 import { formatClock, HEADER_HEIGHT, MicIcon, SiteHeader } from './site-header';
-import type { Pipeline, StateSnapshot, TranscriptLine } from './types';
+import type { StateSnapshot, TranscriptLine } from './types';
 
 interface Props {
   personaName: string;
   guardianName: string;
-  pipeline: Pipeline;
   messagesApi: UseSessionMessagesReturn;
   onEnded: (final: { snapshot: StateSnapshot | null; transcript: TranscriptLine[]; seconds: number }) => void;
 }
@@ -57,7 +56,7 @@ export function useStateSnapshot(): StateSnapshot | null {
   }, [textStreams]);
 }
 
-export function CallView({ personaName, guardianName, pipeline, messagesApi, onEnded }: Props) {
+export function CallView({ personaName, guardianName, messagesApi, onEnded }: Props) {
   const session = useSessionContext();
   const agent = useAgent();
   const { messages, send, isSending } = messagesApi;
@@ -104,6 +103,8 @@ export function CallView({ personaName, guardianName, pipeline, messagesApi, onE
   }, [agentGone]);
 
   const agentState = agent.state;
+  // Five frequency bands of the agent's own audio track (Web Audio analyser), 0 to 1 each.
+  const levels = useMultibandTrackVolume(agent.microphoneTrack, { bands: 5 });
   const statusText =
     agentState === 'speaking'
       ? `${personaName} is speaking`
@@ -115,7 +116,8 @@ export function CallView({ personaName, guardianName, pipeline, messagesApi, onE
             ? 'Connected'
             : `Waiting for ${personaName}`;
   const readback = snapshot?.proposal?.readbackText ?? null;
-  const pipelineShown = snapshot?.pipeline ?? pipeline;
+  // The models the agent itself reports; nothing is shown until its first snapshot arrives.
+  const pipelineShown = snapshot?.pipeline ?? null;
   const proposal = snapshot?.proposal ?? null;
   const toolCalls = useMemo(() => snapshot?.toolCalls ?? [], [snapshot]);
   const toolsByTurn = useMemo(
@@ -175,14 +177,13 @@ export function CallView({ personaName, guardianName, pipeline, messagesApi, onE
         <section className="card flex min-w-0 flex-1 flex-col" style={{ maxHeight: cardMaxHeight }}>
           <div className="flex flex-none items-center gap-4 border-b border-border px-6 py-4">
             <div aria-hidden="true" className="flex items-end gap-[3px]" style={{ height: 22 }}>
-              {[0, 1, 2, 3, 4].map((i) => (
+              {levels.map((v, i) => (
                 <span
                   key={i}
                   className="block w-[4px] rounded-[2px]"
                   style={{
-                    height: agentState === 'speaking' ? [8, 16, 22, 12, 6][i] : 6,
+                    height: 6 + Math.round(Math.min(1, v) * 16),
                     background: agentState === 'speaking' ? '#166534' : '#CBD5D0',
-                    transition: 'height 200ms',
                   }}
                 />
               ))}
@@ -281,13 +282,15 @@ export function CallView({ personaName, guardianName, pipeline, messagesApi, onE
                 : 'waiting for agent'}
             </dd>
             <dt className="text-text-muted">Pipeline</dt>
-            <dd className="mono m-0 flex flex-wrap gap-x-1">
-              {[pipelineShown.stt.split('/').pop(), pipelineShown.llm.split('/').pop(), pipelineShown.tts.split('/').pop()?.split(':')[0]].map((m, i) => (
-                <span key={i} className="whitespace-nowrap">
-                  {i > 0 ? '· ' : ''}
-                  {m}
-                </span>
-              ))}
+            <dd className={`m-0 flex flex-wrap gap-x-1 ${pipelineShown ? 'mono' : 'text-text-muted'}`}>
+              {pipelineShown
+                ? [pipelineShown.stt.split('/').pop(), pipelineShown.llm.split('/').pop(), pipelineShown.tts.split('/').pop()?.split(':')[0]].map((m, i) => (
+                    <span key={i} className="whitespace-nowrap">
+                      {i > 0 ? '· ' : ''}
+                      {m}
+                    </span>
+                  ))
+                : 'waiting for agent'}
             </dd>
           </dl>
 

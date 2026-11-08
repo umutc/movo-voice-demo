@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import { getLatestPipeline } from 'db/read';
 import { Label, PageHeader, SectionHead, Status } from '@/components/console/ui';
-import { academyName, flag, personaName, readLastEvalRun } from '@/lib/console/data';
+import { academyName, databaseUrl, personaName, readLastEvalRun } from '@/lib/console/data';
+import { clock, shortDate } from '@/lib/console/format';
 
 function Field({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
@@ -25,38 +27,56 @@ function Feature({ name, note, on }: { name: string; note: React.ReactNode; on: 
   );
 }
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
   const persona = personaName();
   const phone = process.env.NEXT_PUBLIC_LIVEKIT_PHONE_NUMBER?.trim() || null;
-  const sms = flag('FEATURE_SMS');
-  const outbound = flag('FEATURE_OUTBOUND');
   const run = readLastEvalRun();
+  // The models the agent itself recorded (calls.metrics.pipeline), not the web app's env.
+  const latest = await getLatestPipeline(databaseUrl());
 
   return (
     <>
-      <PageHeader title="Agent settings" lead={`Persona, models, channels and the rails ${persona} runs with. Read-only: values come from the deployment environment.`} />
+      <PageHeader title="Agent settings" lead={`Persona, models, channels and the rails ${persona} runs with. Read-only. Models come from the agent's latest recorded call; names and the phone number come from the web config.`} />
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <section className="card flex flex-col pb-2">
           <SectionHead title="Persona" />
           <Field label="Assistant name" value={persona} />
           <Field label="Academy" value={academyName()} />
+          <span className="caption border-t border-divider px-6 py-3">Web config (DEMO_AGENT_PERSONA_NAME, DEMO_ACADEMY_NAME). The agent reads its own copy.</span>
         </section>
         <section className="card flex flex-col pb-2">
           <SectionHead title="Models, through LiveKit Inference" />
-          <Field label="Speech to text" value={process.env.LK_STT_MODEL?.trim() || 'deepgram/nova-3'} mono />
-          <Field label="Language model" value={process.env.LK_LLM_MODEL?.trim() || 'openai/gpt-6.1-terra'} mono />
-          <Field label="Voice" value={process.env.LK_TTS_MODEL?.trim() || 'deepgram/aura-2:athena'} mono />
+          {latest ? (
+            <>
+              {latest.pipeline.stt && <Field label="Speech to text" value={latest.pipeline.stt} mono />}
+              {latest.pipeline.llm && <Field label="Language model" value={latest.pipeline.llm} mono />}
+              {latest.pipeline.tts && <Field label="Voice" value={latest.pipeline.tts} mono />}
+              <span className="caption border-t border-divider px-6 py-3">
+                Recorded by the agent on its latest call, {shortDate(latest.startedAt)}, {clock(latest.startedAt)}.
+              </span>
+            </>
+          ) : (
+            <span className="caption border-t border-divider px-6 py-3">No call has recorded its models yet.</span>
+          )}
         </section>
         <section className="card flex flex-col pb-2">
           <SectionHead title="Channels and features" />
           <Feature name="Browser calls" note="Parent site form, self_reported identity" on />
           <Feature
             name="Inbound phone"
-            note={phone ? <span className="mono">{phone}</span> : 'NEXT_PUBLIC_LIVEKIT_PHONE_NUMBER is not set'}
+            note={
+              phone ? (
+                <>
+                  <span className="mono">{phone}</span>, from the web config
+                </>
+              ) : (
+                'NEXT_PUBLIC_LIVEKIT_PHONE_NUMBER is not set'
+              )
+            }
             on={phone !== null}
           />
-          <Feature name="Outbound follow-up calls" note="FEATURE_OUTBOUND, needs a Twilio SIP trunk" on={outbound} />
-          <Feature name="SMS confirmations" note="FEATURE_SMS, consent required on the call" on={sms} />
+          <Feature name="Outbound follow-up calls" note="Not built: the dial port is a fake" on={false} />
+          <Feature name="SMS confirmations" note="Not built: the SMS port is a fake and no SMS tool exists" on={false} />
         </section>
         <section className="card flex flex-col pb-2">
           <SectionHead title="Rails, always on" />

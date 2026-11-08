@@ -24,16 +24,8 @@ export function ConsoleNav({ academyName, callbacks }: { academyName: string; ca
           rollcall
         </span>
       </Link>
-      {/* One seeded academy: the switcher renders it and has nothing to switch to. */}
-      <div
-        aria-label="Academy"
-        className="mt-3 mb-4 flex h-11 items-center justify-between gap-2 rounded-[8px] border border-border bg-surface-muted px-3 text-[13px] font-medium"
-      >
-        <span className="truncate">{academyName}</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M7 10l5 5 5-5" />
-        </svg>
-      </div>
+      {/* One seeded academy, so its name is plain text, not a switcher. */}
+      <span className="mt-3 mb-4 truncate px-2 text-[13px] font-medium text-text-secondary">{academyName}</span>
       {LINKS.map((l) => {
         const active = isActive(l.href);
         return (
@@ -44,7 +36,11 @@ export function ConsoleNav({ academyName, callbacks }: { academyName: string; ca
             className={`flex h-[38px] items-center rounded-[8px] px-2.5 text-[14px] ${active ? 'bg-background font-semibold text-text' : 'font-medium text-text-secondary hover:bg-surface-muted'}`}
           >
             {l.label}
-            {l.href === '/console/callbacks' && callbacks > 0 && <span className="ml-auto text-[12px] font-semibold text-warning">{callbacks}</span>}
+            {l.href === '/console/callbacks' && callbacks > 0 && (
+              <span className="mono ml-auto text-[12px] text-text-muted" aria-label={`${callbacks} requests on record`}>
+                {callbacks}
+              </span>
+            )}
           </Link>
         );
       })}

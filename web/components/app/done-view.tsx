@@ -53,7 +53,7 @@ export function DoneView({ personaName, guardianName, snapshot, transcript, seco
     ? `${booking.childName}'s free trial is set for ${longDate(booking.startsAt)}.`
     : snapshot?.outcome === 'callback'
       ? 'The academy staff will call you back.'
-      : 'Thanks for talking with Maya.';
+      : `Thanks for talking with ${personaName}.`;
   const transcriptText = transcript.map((l) => `${l.role === 'agent' ? personaName : guardianName}: ${l.text}`).join('\n');
   const toolSteps = snapshot?.toolCalls ?? [];
   // Step times are offsets from the call row's startedAt, written by the agent on the same clock as the tool log.
@@ -142,7 +142,8 @@ export function DoneView({ personaName, guardianName, snapshot, transcript, seco
         <aside className="card flex w-[360px] flex-none flex-col self-start">
           <h2 className="font-display m-0 border-b border-border px-5 py-4 text-[15px] font-semibold">This call, step by step</h2>
           <ol className="m-0 flex list-none flex-col gap-3 px-5 py-4">
-            <Step time="00:00" label="Caller identified">
+            {/* No timestamp is recorded for identification (it happens before the call row opens), so the time cell stays blank. */}
+            <Step time="" label="Caller identified">
               {snapshot ? (
                 <>
                   <span className="mono text-[13px] whitespace-nowrap">{snapshot.identitySource}</span>

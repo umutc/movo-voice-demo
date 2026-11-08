@@ -40,13 +40,13 @@ export function PreCallForm({ phoneNumber, personaName, catalog, onStart, error,
             weeks, reads the details back and books it on the call. Interrupt her whenever you like.
           </p>
           <div className="card flex flex-col gap-2 p-5">
-            <span className="caption font-medium tracking-wide uppercase">A typical call</span>
+            <span className="caption font-medium tracking-wide uppercase">Example call</span>
             <p className="m-0 text-[15px]">
               <span className="font-semibold">You:</span> My son is nine and we&apos;re near McCarren.
             </p>
             <p className="m-0 text-[15px]">
               <span className="font-semibold text-accent">{personaName}:</span> Nine means Academy U10 at McCarren Park on Tuesday and
-              Thursday evenings. The next open trial is this Tuesday. Want me to hold a spot?
+              Thursday evenings. Want me to check the open trial classes?
             </p>
           </div>
           <p className="caption m-0 text-[13px]">

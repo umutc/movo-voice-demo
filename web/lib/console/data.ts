@@ -7,19 +7,7 @@ export function databaseUrl(): string {
   return url;
 }
 
-export function academyName(): string {
-  return process.env.DEMO_ACADEMY_NAME?.trim() || 'Brooklyn Youth Soccer Academy';
-}
-
-export function personaName(): string {
-  return process.env.DEMO_AGENT_PERSONA_NAME?.trim() || 'Maya';
-}
-
-/** Same parsing as agent/src/config.ts: 'true' or '1' is on, anything else off. */
-export function flag(name: 'FEATURE_SMS' | 'FEATURE_OUTBOUND'): boolean {
-  const v = process.env[name]?.trim();
-  return v === 'true' || v === '1';
-}
+export { academyName, personaName } from '@/lib/site';
 
 /** Shape written by eval/run.ts to eval/out/last-run.json (only the fields the console reads). */
 export interface EvalRun {

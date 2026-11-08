@@ -1,10 +1,14 @@
 import type { Metadata } from 'next';
+import { AcademyProvider } from '@/components/app/academy';
+import { academyName, personaName } from '@/lib/site';
 import '@/styles/globals.css';
 
-export const metadata: Metadata = {
-  title: 'Brooklyn Youth Soccer Academy, free trial',
-  description: 'Book a free trial class by talking to Maya, the academy assistant. Prototype on LiveKit Agents.',
-};
+export function generateMetadata(): Metadata {
+  return {
+    title: `${academyName()}, free trial`,
+    description: `Book a free trial class by talking to ${personaName()}, the academy assistant. Prototype on LiveKit Agents.`,
+  };
+}
 
 // Google Fonts via <link> rather than next/font: next/font fetches at build time and failed on the
 // Amplify build image. The design tokens only need Inter and Space Grotesk by family name.
@@ -18,7 +22,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href={FONTS_HREF} />
       </head>
-      <body className="min-h-svh">{children}</body>
+      <body className="min-h-svh">
+        <AcademyProvider name={academyName()}>{children}</AcademyProvider>
+      </body>
     </html>
   );
 }

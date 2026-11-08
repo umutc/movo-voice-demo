@@ -7,20 +7,18 @@ import { RoomAudioRenderer, SessionProvider, useSession, useSessionMessages } fr
 import { CallView } from './call-view';
 import { DoneView } from './done-view';
 import { PreCallForm } from './pre-call-form';
-import { ATTR, type FormValues, type Pipeline, type StateSnapshot, type TranscriptLine } from './types';
+import { ATTR, type FormValues, type StateSnapshot, type TranscriptLine } from './types';
 
 interface AppProps {
   agentName: string;
   phoneNumber: string | null;
-  academyName: string;
   personaName: string;
-  pipeline: Pipeline;
   catalog: HomeCatalog | null;
 }
 
 type View = 'form' | 'call' | 'done';
 
-export function App({ agentName, phoneNumber, personaName, pipeline, catalog }: AppProps) {
+export function App({ agentName, phoneNumber, personaName, catalog }: AppProps) {
   const [view, setView] = useState<View>('form');
   const [form, setForm] = useState<FormValues>({ guardianName: '', phone: '', email: '', consent: false });
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +78,6 @@ export function App({ agentName, phoneNumber, personaName, pipeline, catalog }: 
         <CallView
           personaName={personaName}
           guardianName={form.guardianName || 'You'}
-          pipeline={pipeline}
           messagesApi={messagesApi}
           onEnded={(f) => {
             setFinal(f);

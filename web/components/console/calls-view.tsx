@@ -33,8 +33,6 @@ function matches(c: ConsoleCallRow, f: CallFilters): boolean {
   return true;
 }
 
-const BRAINTRUST = 'https://www.braintrust.dev/app/movo-voice-demo/p/movo-voice-demo/logs?search=';
-
 function Chip({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
   return (
     <Link
@@ -170,10 +168,12 @@ function CallDetail({ call }: { call: Detail }) {
             </Status>
           </span>
         </div>
+        {/* No link: Braintrust's SDK permalink needs the span row id, and calls.trace_id holds the root span id. */}
         {call.traceId && (
-          <a href={`${BRAINTRUST}${encodeURIComponent(call.traceId)}`} target="_blank" rel="noreferrer" className="btn-secondary">
-            Trace in Braintrust
-          </a>
+          <span className="flex flex-col gap-0.5 text-[13px]">
+            <span className="text-text-muted">Braintrust trace id</span>
+            <span className="mono break-all">{call.traceId}</span>
+          </span>
         )}
       </div>
       <div className="grid grid-cols-1 gap-0 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">

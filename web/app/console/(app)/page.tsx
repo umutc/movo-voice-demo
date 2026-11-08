@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { listConsoleCallbacks, listConsoleCalls, listConsolePrograms, listConsoleSlots, listCallMetrics } from 'db/read';
 import { Sparkline } from '@/components/console/sparkline';
 import { Empty, PageHeader, SectionHead, Status, td, th } from '@/components/console/ui';
-import { databaseUrl, flag, personaName, readLastEvalRun } from '@/lib/console/data';
+import { databaseUrl, personaName, readLastEvalRun } from '@/lib/console/data';
 import { callLength, channel, clock, dayKey, longToday, maskPhone, outcomeDot, outcomeLabel, shortDate, slotTime, weekdayDate, when } from '@/lib/console/format';
 import { summarizeMetrics } from '@/lib/console/stats';
 
@@ -28,15 +28,13 @@ export default async function DashboardPage() {
   const e2e = lat.metrics.find((m) => m.key === 'e2eMs');
   const evalRun = readLastEvalRun();
   const evalPassing = evalRun ? evalRun.scenarios.filter((s) => s.invariantsPass).length : null;
-  const outbound = flag('FEATURE_OUTBOUND');
-  const sms = flag('FEATURE_SMS');
   const listed = (todays.length > 0 ? todays : recent).slice(0, 8);
 
   return (
     <>
       <PageHeader
         title={longToday(now)}
-        lead={`${personaName()} is answering on the parent site and the inbound number. Outbound calls are ${outbound ? 'on' : 'off'}, SMS is ${sms ? 'on' : 'off'}.`}
+        lead={`${personaName()} answers on the parent site and the inbound number. Outbound calls and SMS are not built.`}
       />
 
       <section className="card flex flex-wrap items-center gap-8 px-7 py-6">
@@ -48,7 +46,7 @@ export default async function DashboardPage() {
         </div>
         <div className="flex flex-1 flex-col gap-1.5 text-[14px] text-text-secondary">
           <span>
-            <strong className="text-text">{callbacks.length}</strong> {callbacks.length === 1 ? 'callback' : 'callbacks'} waiting
+            <strong className="text-text">{callbacks.length}</strong> callback {callbacks.length === 1 ? 'request' : 'requests'} on record
           </span>
           <span>
             <strong className="text-text">{seatsBooked}</strong> of {seatsTotal} trial seats booked, next 7 days
@@ -118,7 +116,7 @@ export default async function DashboardPage() {
 
       <div className="flex flex-wrap gap-5">
         <section className="card flex min-w-0 flex-[1_1_360px] flex-col">
-          <SectionHead title="Callbacks waiting" href="/console/callbacks" linkLabel="All callbacks" />
+          <SectionHead title="Callback requests" href="/console/callbacks" linkLabel="All callbacks" />
           {callbacks.length === 0 ? (
             <Empty>No callback requests.</Empty>
           ) : (

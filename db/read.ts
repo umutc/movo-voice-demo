@@ -265,6 +265,25 @@ export async function listCallMetrics(url: string): Promise<{ id: string; starte
   }
 }
 
+/** Pipeline the agent recorded on its most recent call that has metrics, with that call's start time. */
+export async function getLatestPipeline(url: string): Promise<{ startedAt: string; pipeline: { stt: string | null; llm: string | null; tts: string | null } } | null> {
+  const { db, close } = createDb(url, { max: 1 });
+  try {
+    const [row] = await db
+      .select({ startedAt: calls.startedAt, metrics: calls.metrics })
+      .from(calls)
+      .where(isNotNull(calls.metrics))
+      .orderBy(desc(calls.startedAt))
+      .limit(1);
+    const p = (row?.metrics as CallMetricsJson | null | undefined)?.pipeline;
+    if (!row || !p) return null;
+    return { startedAt: row.startedAt.toISOString(), pipeline: { stt: p.stt ?? null, llm: p.llm ?? null, tts: p.tts ?? null } };
+  } finally {
+    await close();
+  }
+}
+
+/** Every callback request on record. There is no status column, so this is not a "waiting" count. */
 export async function countCallbacks(url: string): Promise<number> {
   const { db, close } = createDb(url, { max: 1 });
   try {

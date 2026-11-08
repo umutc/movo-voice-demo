@@ -1,4 +1,9 @@
+'use client';
+
+import { initials, useAcademyName } from './academy';
+
 export function Wordmark({ full = false }: { full?: boolean }) {
+  const academy = useAcademyName();
   return (
     <div className="flex items-center gap-3">
       <svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="#166534" strokeWidth="2" aria-hidden="true">
@@ -8,9 +13,9 @@ export function Wordmark({ full = false }: { full?: boolean }) {
       </svg>
       <div className="flex flex-col leading-tight">
         <span className="font-display text-[15px] font-700" style={{ fontWeight: 700 }}>
-          BYSA
+          {initials(academy)}
         </span>
-        {full && <span className="caption">Brooklyn Youth Soccer Academy</span>}
+        {full && <span className="caption">{academy}</span>}
       </div>
     </div>
   );
