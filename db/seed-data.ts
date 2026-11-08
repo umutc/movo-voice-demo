@@ -62,15 +62,51 @@ export const PROGRAMS: Program[] = [
   },
 ];
 
-const COACHES = ['Coach Dana', 'Coach Luis', 'Coach Priya', 'Coach Sam', 'Coach Mei'];
-
 // Weekday numbers: 0 Sunday .. 6 Saturday. Times are New York local, written as [hour, minute].
-const SLOT_PLAN: Record<string, { weekdays: number[]; times: [number, number][]; capacity: number }> = {
-  'u6-prospect': { weekdays: [6], times: [[9, 0], [10, 0]], capacity: 6 },
-  'u8-prospect': { weekdays: [3, 6], times: [[16, 0], [9, 30]], capacity: 6 },
-  'u10-mccarren': { weekdays: [2, 4], times: [[17, 30]], capacity: 8 },
-  'u12-mccarren': { weekdays: [1, 3], times: [[18, 0]], capacity: 8 },
-  'u14-prospect': { weekdays: [2, 5], times: [[18, 30]], capacity: 10 },
+// Each session is one weekday and one time, so a slot always falls on a day the program lists and
+// at a time that fits its time of day (morning before noon, afternoon 12 to 5 PM, evening after).
+// Each program has a fixed set of one or two coaches; slots take turns between them.
+const SLOT_PLAN: Record<string, { sessions: { weekday: number; time: [number, number] }[]; coaches: string[]; capacity: number }> = {
+  'u6-prospect': {
+    sessions: [
+      { weekday: 6, time: [9, 0] },
+      { weekday: 6, time: [10, 0] },
+    ],
+    coaches: ['Coach Mei'],
+    capacity: 6,
+  },
+  'u8-prospect': {
+    sessions: [
+      { weekday: 3, time: [16, 0] },
+      { weekday: 6, time: [14, 0] },
+    ],
+    coaches: ['Coach Priya', 'Coach Mei'],
+    capacity: 6,
+  },
+  'u10-mccarren': {
+    sessions: [
+      { weekday: 2, time: [17, 30] },
+      { weekday: 4, time: [17, 30] },
+    ],
+    coaches: ['Coach Luis'],
+    capacity: 8,
+  },
+  'u12-mccarren': {
+    sessions: [
+      { weekday: 1, time: [18, 0] },
+      { weekday: 3, time: [18, 0] },
+    ],
+    coaches: ['Coach Luis', 'Coach Sam'],
+    capacity: 8,
+  },
+  'u14-prospect': {
+    sessions: [
+      { weekday: 2, time: [18, 30] },
+      { weekday: 5, time: [18, 30] },
+    ],
+    coaches: ['Coach Rosa'],
+    capacity: 10,
+  },
 };
 
 const NY = 'America/New_York';
@@ -124,11 +160,11 @@ export function generateSlots(from: Date, daysAhead = 14): TrialSlot[] {
     for (let d = 1; d <= daysAhead && perProgram.length < 5; d++) {
       const day = new Date(from.getTime() + d * 86_400_000);
       const { year, month, day: dom, weekday } = nyDateParts(day);
-      if (!plan.weekdays.includes(weekday)) continue;
-      for (const [h, m] of plan.times) {
-        if (perProgram.length >= 5) break;
+      for (const { weekday: wd, time } of plan.sessions) {
+        if (wd !== weekday || perProgram.length >= 5) continue;
+        const [h, m] = time;
         const startsAt = nyLocal(year, month, dom, h, m);
-        const coach = COACHES[(perProgram.length + PROGRAMS.indexOf(program)) % COACHES.length] ?? COACHES[0]!;
+        const coach = plan.coaches[perProgram.length % plan.coaches.length]!;
         perProgram.push({
           id: `${program.id}-${year}-${pad(month)}-${pad(dom)}-${pad(h)}${pad(m)}`,
           programId: program.id,
@@ -149,6 +185,6 @@ export const DEMO_FAMILY = {
   email: 'jordan.demo@example.com',
   children: [{ name: 'Emma', age: 7 }],
   summary:
-    'Jordan called about a program for Emma, age seven. We discussed Juniors U8 at Prospect Park on Saturday mornings. Jordan wanted to check the schedule with a partner before booking a trial.',
+    'Jordan called about a program for Emma, age seven. We discussed Juniors U8 at Prospect Park on Saturday afternoons. Jordan wanted to check the schedule with a partner before booking a trial.',
   priorInquiryReason: 'Asked about Juniors U8 for Emma, wanted to confirm Saturday availability',
 } as const;

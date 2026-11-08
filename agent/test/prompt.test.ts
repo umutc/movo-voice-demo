@@ -73,12 +73,12 @@ describe('system prompt', () => {
         guardianName: 'Jordan Demo',
         summary: 'Discussed U8.',
         children: [{ name: 'Emma', age: 7 }],
-        lastBooking: { childName: 'Emma', programName: 'Juniors U8', startsAt: new Date('2026-11-14T14:30:00Z') },
+        lastBooking: { childName: 'Emma', programName: 'Juniors U8', startsAt: new Date('2026-11-14T19:00:00Z') },
         lastCallAt: null,
       },
     });
     expect(text).toMatch(/Guardian name: Jordan Demo/);
     expect(text).toMatch(/Emma, age 7/);
-    expect(text).toMatch(/Juniors U8 on Saturday, November 14.*9:30 AM/);
+    expect(text).toMatch(/Juniors U8 on Saturday, November 14.*2:00 PM/);
   });
 });

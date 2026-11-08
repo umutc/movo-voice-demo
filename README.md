@@ -51,10 +51,10 @@ flowchart LR
   AMP --> DB
   W --> BT["Braintrust"]
   EV["pnpm eval"] --> BT
-  W -.->|"outbound SIP, SMS"| TW["Twilio<br/>optional, not connected"]
+  W -.->|"outbound SIP, SMS"| TW["Twilio<br/>not built"]
 ```
 
-The dotted token edge is the HTTPS reply to the browser. The Twilio edge exists in code but is not connected.
+The dotted token edge is the HTTPS reply to the browser. The dotted Twilio edge is not built: the SMS and dial ports exist as fakes only.
 
 ## What it does
 
@@ -64,15 +64,15 @@ The dotted token edge is the HTTPS reply to the browser. The Twilio edge exists 
 - Remembers a returning family and writes a post-call summary.
 - Hands unanswerable questions to a human callback request.
 - Writes bookings with locking and idempotency on Postgres.
-- Records Braintrust traces, per-turn latency files and a 13-scenario eval.
+- Records Braintrust traces, per-turn latency files and a 10-scenario core eval (3 more scenarios need tools that are not built).
 - Shows calls, callbacks, families and quality in a read-only console.
 
-Not done or not verified: outbound calls and SMS (Twilio is not connected). See the
+Not built: outbound calls and SMS (the SMS and dial ports exist as fakes only). See the
 [build report](docs/build-report.md) for the full status and known gaps.
 
 ## Quickstart
 
-You need accounts for LiveKit Cloud, Supabase and Braintrust. Twilio is optional.
+You need accounts for LiveKit Cloud, Supabase and Braintrust. Twilio is not used yet.
 
 ```
 mise install                 # pins Node 24 and pnpm 12
@@ -130,7 +130,7 @@ db/          Drizzle schema, migrations, seed, in-memory fake
 eval/        scenarios, simulated caller, scorers, invariants
 web/         Next.js: parent pages, /api/token, /console
 telephony/   SIP dispatch rule and trunk templates
-scripts/     latency report, metrics export, outbound call
+scripts/     latency report, metrics export, telephony render
 design/      reference mockups and screenshots
 docs/        build report, build process, e2e evidence
 ```
@@ -142,7 +142,6 @@ flowchart LR
   subgraph Channels
     B["Browser: web/ (Next.js)<br/>web/app/api/token"] -->|WebRTC| LK
     P["Phone inbound:<br/>LiveKit number + dispatch rule<br/>telephony/"] -->|SIP| LK
-    O["Phone outbound (optional,<br/>not verified): scripts/call.ts"] -.->|SIP| LK
   end
   LK["LiveKit Cloud room"] <--> A
   subgraph Worker["agent/src (Node.js worker, @livekit/agents 1.9.5)"]
@@ -155,7 +154,7 @@ flowchart LR
   A -->|STT / LLM / TTS| INF["LiveKit Inference"]
   T -->|DbPort| DB[("Supabase Postgres<br/>db/schema.ts, Drizzle")]
   M -->|DbPort| DB
-  A -.->|SmsPort, DialPort: fakes| TW["Twilio (not connected)"]
+  A -.->|SmsPort, DialPort: fakes| TW["Twilio (not built)"]
   X -->|spans| BT["Braintrust"]
   X -->|"metrics/&lt;callId&gt;.json"| R["pnpm report:latency"]
   TEST["agent/test, db/test:<br/>Vitest, db/fake.ts"] --> A

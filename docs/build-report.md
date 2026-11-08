@@ -14,11 +14,12 @@ This report records how the demo was built: status, decisions, SDK notes, gotcha
 | 5 Interruption, metrics, tracing | done | see git log |
 | 6 Scenario eval | done | see git log |
 | 7 Inbound phone | done, two calls from one phone | see git log |
-| 8 Hardening, deploy, docs | in progress: deploy running, docs | see git log |
+| 8 Hardening, deploy, docs | done except the digit-spelling voice check; generated and audio simulations cut | see git log |
 | Stretch: read-only console | done, all 7 console pages behind `CONSOLE_PASSWORD` | `web: read-only tenant console` |
 
-Phase 7: number +1 929 428 8103 bought, dispatch rule created, rule assignment and the phone test
-pending Umut.
+Phase 7: number +1 929 428 8103 bought and the dispatch rule created. Umut assigned the rule to the
+number in the LiveKit dashboard on 2026-11-07 and made two real calls the same day; both times the
+agent recognized the demo family by caller id.
 
 Verified end to end today: browser calls (typed and spoken) with booking and summary on the booked
 page, Braintrust traces with nested spans, metrics files and `pnpm report:latency`,
@@ -29,7 +30,7 @@ Mocked: `SmsPort` and `DialPort` (fakes in live runs too, no Twilio).
 Console pages shipped (2026-11-07, `/console`, read-only, screenshots in `design/shots/console-*-1280.png`): Dashboard, Calls (list with outcome, channel and day filters, detail at `/console/calls/[id]`), Callbacks, Quality, Families, Programs and slots, Agent settings. Left out: Cloud simulations on Quality (no stored data source), callback status (waiting or done) and handling buttons (no status column, console is read-only), the per-invariant list on Quality (`last-run.json` stores only failed invariant names), recordings.
 
 Not done: outbound (Phase 9), SMS and second guardian (stretch), the Cartesia quality check, audio
-simulations, the human phone test, the half-second interruption timing.
+simulations, the half-second interruption timing.
 
 ## Scope
 
@@ -41,6 +42,7 @@ What works today (verified in a real run, see Status):
 
 - A browser call, typed or spoken, that books a trial class in Postgres.
 - Returning-family memory and a post-call summary.
+- An inbound phone call to the LiveKit number: two real calls on 2026-11-07, demo family recognized by caller id both times (AC-6).
 - The read-back protocol: a booking needs a confirmed proposal.
 - Booking semantics (locking, idempotency) on real Postgres (`pnpm test:db`).
 - Braintrust traces with nested spans, metrics files and `pnpm report:latency`.
@@ -57,12 +59,10 @@ What is not done or not verified yet:
 - Outbound calls (Phase 9). The Twilio trial trunk is not set up (`FEATURE_OUTBOUND=false`).
 - SMS confirmation and a second guardian (stretch). No Twilio account is connected
   (`FEATURE_SMS=false`).
-- An inbound phone call by a human to the LiveKit number, and the second-call recognition of the
-  same phone (AC-6). The dispatch rule is created but not yet assigned to the number.
-- The Cartesia voice (`LK_TTS_MODEL_RECORDING`). Only the Deepgram voice ran.
+- The Cartesia voice (`cartesia/sonic-3`, noted next to `LK_TTS_MODEL` in `.env.example`). Only the Deepgram voice ran.
 - Audio simulations in LiveKit Cloud.
 - The half-second interruption stop time (AC-3).
-- Deployment to LiveKit Cloud: in progress, not yet verified with the laptop closed (AC-7).
+- Deployment to LiveKit Cloud is live (`lk agent deploy`), but no call was placed with the laptop closed on purpose (AC-7).
 
 Not in scope: payments, CRM, admin login, TCPA or HIPAA work, a live transfer to a human,
 non-English, voicemail detection.

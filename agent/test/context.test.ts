@@ -19,8 +19,8 @@ function makeContext(identity: ReturnType<typeof resolveIdentity>, db = new Fake
   return new SessionContext({ identity, db, sms: new FakeSmsPort(), dial: new FakeDialPort(), judge: yesJudge, features: { sms: false, guardian: false }, roomName: 'test-room' });
 }
 
-const details = { programId: 'u8-prospect', slotId: 'u8-prospect-2026-11-14-0930', childName: 'Emma', childAge: 7, guardianName: 'Jordan' };
-const READBACK = 'Just to confirm: a free trial for Emma, age 7, in Juniors U8 on Saturday, November 14 at 9 30 in the morning with Coach Priya, booked under Jordan. Shall I book that?';
+const details = { programId: 'u8-prospect', slotId: 'u8-prospect-2026-11-14-1400', childName: 'Emma', childAge: 7, guardianName: 'Jordan' };
+const READBACK = 'Just to confirm: a free trial for Emma, age 7, in Juniors U8 on Saturday, November 14 at 2 in the afternoon with Coach Priya, booked under Jordan. Shall I book that?';
 
 describe('identity resolution', () => {
   it('SIP participant kind gives caller_id_only with the SIP phone', () => {

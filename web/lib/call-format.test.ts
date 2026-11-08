@@ -6,7 +6,7 @@ describe('call-format', () => {
     expect(formatPhone('+19294288103')).toBe('+1 (929) 428-8103');
     expect(formatPhone('+442071234567')).toBe('+442071234567');
     expect(clockTime('2026-11-11T14:30:00.000Z')).toBe('9:30 AM');
-    expect(parseSlotId('u8-prospect-2026-11-11-0930')).toEqual({ programId: 'u8-prospect', when: 'Wed Nov 11, 9:30 AM' });
+    expect(parseSlotId('u6-prospect-2026-11-14-0900')).toEqual({ programId: 'u6-prospect', when: 'Sat Nov 14, 9:00 AM' });
     expect(parseSlotId('u8-prospect-2026-11-11-1600')?.when).toBe('Wed Nov 11, 4:00 PM');
     expect(parseSlotId('weird')).toBeNull();
   });
@@ -14,15 +14,15 @@ describe('call-format', () => {
   it('describes tool lines without raw ids and with plurals', () => {
     expect(describeTool({ name: 'lookup_programs', ok: true, summary: '1 programs for age 7' })).toEqual({ label: 'Programs looked up', parts: ['1 program for age 7'] });
     expect(describeTool({ name: 'check_trial_slots', ok: true, summary: '2 slots for u8-prospect' }).parts).toEqual(['2 open slots', 'u8-prospect']);
-    expect(describeTool({ name: 'propose_booking', ok: true, summary: 'prop-1 u8-prospect u8-prospect-2026-11-11-0930 Emma' }).parts).toEqual([
+    expect(describeTool({ name: 'propose_booking', ok: true, summary: 'prop-1 u8-prospect u8-prospect-2026-11-11-1600 Emma' }).parts).toEqual([
       'Emma',
       'u8-prospect',
-      'Wed Nov 11, 9:30 AM',
+      'Wed Nov 11, 4:00 PM',
     ]);
     expect(describeTool({ name: 'book_trial_class', ok: true, summary: '1be9adc5-0000-4000-8000-000000000000' }).parts).toEqual(['confirmation BK-1BE9ADC5']);
     expect(describeTool({ name: 'end_call', ok: true, summary: 'requested' })).toEqual({ label: 'Call end requested', parts: [] });
     expect(describeTool({ name: 'new_tool', ok: true, summary: 'x' }).label).toBe('New tool');
-    expect(proposalSummaryParts('Emma · u8-prospect · u8-prospect-2026-11-11-0930')).toEqual(['Emma', 'u8-prospect', 'Wed Nov 11, 9:30 AM']);
+    expect(proposalSummaryParts('Emma · u8-prospect · u8-prospect-2026-11-14-1400')).toEqual(['Emma', 'u8-prospect', 'Sat Nov 14, 2:00 PM']);
   });
 
   it('puts each tool under the user turn before it', () => {

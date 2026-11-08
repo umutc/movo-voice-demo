@@ -160,7 +160,7 @@ describe('enrollment agent behavior (real LLM, fake ports)', () => {
 
   it('LLM affirmation judge classifies yes, no and other', async () => {
     const judge = makeLlmAffirmationJudge(testLlm());
-    const readback = 'Just to confirm: a free trial for Emma, age 7, in Juniors U8 on Saturday, November 14 at 9 30 in the morning with Coach Priya, booked under Jordan. Shall I book that?';
+    const readback = 'Just to confirm: a free trial for Emma, age 7, in Juniors U8 on Saturday, November 14 at 2 in the afternoon with Coach Priya, booked under Jordan. Shall I book that?';
     expect(await judge(readback, 'Yes, that works, go ahead.')).toBe('yes');
     expect(await judge(readback, 'No, can we do the Wednesday one instead?')).toBe('no');
     expect(await judge(readback, 'Wait, is parking free there?')).toBe('other');
