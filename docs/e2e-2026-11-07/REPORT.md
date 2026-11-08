@@ -17,6 +17,9 @@
   describes the first run; ids, durations and exact wording in the new
   screenshots differ (for example B is BK-229C749D). The Playwright browser
   had no microphone, so the mute button shows its muted state.
+- Scenario B was reshot a second time with a fake silent microphone, so its
+  mute button shows the normal mic. New call: BK-68E0A320, 01:17, phone
+  (718) 555-0174. Screen 05 is 1280x940 so no transcript turn is cut off.
 
 ## Result table
 
