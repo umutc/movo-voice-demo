@@ -22,6 +22,7 @@ export function instructionsFor(sc: SessionContext, opts: AgentBuildOptions): st
     now: sc.now(),
     memory: memoryBlockFor(sc.family, sc.familyHasHistory),
     features: sc.features,
+    caller: { channel: sc.identity.source === 'caller_id_only' ? 'phone' : 'browser', knownPhone: sc.identity.phone },
   });
 }
 

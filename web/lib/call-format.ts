@@ -112,7 +112,7 @@ export function toolDetail(t: ToolLine): string[] {
       return m ? [`confirmation BK-${shortId(m[1]!)}${m[2] ? ', already booked' : ''}`] : [s];
     }
     case 'request_human_callback':
-      return ['staff will call back'];
+      return ['request saved for the academy staff'];
     case 'end_call':
       return [];
     default:

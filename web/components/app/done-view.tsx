@@ -52,7 +52,7 @@ export function DoneView({ personaName, guardianName, snapshot, transcript, seco
   const headline = booking
     ? `${booking.childName}'s free trial is set for ${longDate(booking.startsAt)}.`
     : snapshot?.outcome === 'callback'
-      ? 'The academy staff will call you back.'
+      ? 'Your callback request is saved.'
       : `Thanks for talking with ${personaName}.`;
   const transcriptText = transcript.map((l) => `${l.role === 'agent' ? personaName : guardianName}: ${l.text}`).join('\n');
   const toolSteps = snapshot?.toolCalls ?? [];
@@ -78,6 +78,11 @@ export function DoneView({ personaName, guardianName, snapshot, transcript, seco
                 {booking ? 'Booked' : snapshot?.outcome === 'callback' ? 'Callback' : 'No booking'}
               </span>
               <h1 className="font-display m-0 text-[40px] leading-[1.05] font-bold tracking-[-0.02em]">{headline}</h1>
+              {!booking && snapshot?.outcome === 'callback' && (
+                <span className="caption">
+                  This is a demo: the request is stored and shown in the academy console, and no one will actually call you.
+                </span>
+              )}
               {booking && (
                 <span className="caption">
                   Confirmation <span className="mono text-text">BK-{shortId(booking.id)}</span>. Saved while you were on the call.

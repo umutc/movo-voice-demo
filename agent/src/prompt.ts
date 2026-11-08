@@ -18,6 +18,43 @@ export interface PromptInput {
   now: Date;
   memory?: MemoryBlock | null;
   features?: { sms: boolean; guardian: boolean };
+  /** How the caller reached us and the number already on record, for the callback read-back rule. */
+  caller?: CallerInfo;
+}
+
+export interface CallerInfo {
+  /** `phone`: SIP caller id; `browser`: web form or no number. */
+  channel: 'phone' | 'browser';
+  /** E.164 number the session already has (caller id or web form), or null. */
+  knownPhone: string | null;
+}
+
+const DIGIT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+
+/** Last four digits of a phone number as spoken words, e.g. "zero one seven four". */
+export function lastFourWords(phone: string): string {
+  return phone
+    .replace(/\D/g, '')
+    .slice(-4)
+    .split('')
+    .map((d) => DIGIT_WORDS[Number(d)])
+    .join(' ');
+}
+
+function callbackRule(caller: CallerInfo | undefined): string {
+  const known = caller?.knownPhone ? lastFourWords(caller.knownPhone) : null;
+  const first = !known
+    ? 'Ask for the number; if the caller cannot give one, log it without a number.'
+    : caller?.channel === 'phone'
+      ? `Caller id ends in ${known}: ask if the number they are calling from is right, reading back only those four digits.`
+      : `Web form number ends in ${known}: ask if it is right, reading back only those four digits.`;
+  return (
+    `Callbacks. Confirm the number before request_human_callback. ${first} ` +
+    `If a number is garbled or incomplete, ask again; never guess digits. ` +
+    `Read a new number back in groups, like "seven one eight, five five five, zero one seven four", ` +
+    `and log it only after the caller agrees in a later turn; read corrections back too. ` +
+    `Then say you passed their question and number to the academy staff, without promising when anyone will call.`
+  );
 }
 
 const TIME_ZONE = 'America/New_York';
@@ -46,7 +83,7 @@ function formatDate(d: Date): string {
 }
 
 export function buildSystemPrompt(input: PromptInput): string {
-  const { academyName, personaName, variant, now, memory, features } = input;
+  const { academyName, personaName, variant, now, memory, features, caller } = input;
   const sections: string[] = [];
 
   sections.push(
@@ -85,7 +122,6 @@ export function buildSystemPrompt(input: PromptInput): string {
         `Use check_trial_slots for the chosen program and offer two slots. ` +
         `When the caller picks a slot, call propose_booking and say its read-back text word for word, then wait for the answer. ` +
         `Only after the caller clearly agrees, call book_trial_class with the same details. If anything changes, propose again. ` +
-        `For anything outside the tool data, including pricing policy or refunds, offer request_human_callback. ` +
         `Close politely, then call end_call.`,
     );
   } else {
@@ -117,6 +153,8 @@ export function buildSystemPrompt(input: PromptInput): string {
       );
     }
   }
+
+  sections.push(callbackRule(caller));
 
   sections.push(`Current date and time in New York: ${formatNow(now)}.`);
 

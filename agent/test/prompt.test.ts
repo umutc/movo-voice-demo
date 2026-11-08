@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSystemPrompt, wordCount } from '../src/prompt.ts';
+import { buildSystemPrompt, lastFourWords, wordCount } from '../src/prompt.ts';
 
 const base = {
   academyName: 'Brooklyn Youth Soccer Academy',
@@ -30,14 +30,40 @@ describe('system prompt', () => {
   });
 
   it('stays under 600 words in every variant', () => {
+    const callers = [undefined, { channel: 'phone', knownPhone: '+17185550123' }, { channel: 'browser', knownPhone: '+17185550123' }, { channel: 'browser', knownPhone: null }] as const;
     for (const variant of ['inbound', 'follow_up'] as const) {
-      const text = buildSystemPrompt({
-        ...base,
-        variant,
-        memory: { guardianName: 'Jordan Demo', summary: 'A short summary.', children: [{ name: 'Emma', age: 7 }], lastBooking: null, lastCallAt: base.now },
-        features: { sms: true, guardian: true },
-      });
-      expect(wordCount(text)).toBeLessThan(600);
+      for (const caller of callers) {
+        const text = buildSystemPrompt({
+          ...base,
+          variant,
+          memory: { guardianName: 'Jordan Demo', summary: 'A short summary.', children: [{ name: 'Emma', age: 7 }], lastBooking: null, lastCallAt: base.now },
+          features: { sms: true, guardian: true },
+          ...(caller ? { caller } : {}),
+        });
+        expect(wordCount(text)).toBeLessThan(600);
+      }
+    }
+  });
+
+  it('carries the callback number rule for each caller channel', () => {
+    expect(lastFourWords('+17185550174')).toBe('zero one seven four');
+    for (const variant of ['inbound', 'follow_up'] as const) {
+      const anon = buildSystemPrompt({ ...base, variant, caller: { channel: 'browser', knownPhone: null } });
+      expect(anon).toMatch(/Confirm the number before request_human_callback/);
+      expect(anon).toMatch(/garbled or incomplete, ask again; never guess digits/);
+      expect(anon).toMatch(/back in groups, like "seven one eight, five five five, zero one seven four"/);
+      expect(anon).toMatch(/only after the caller agrees in a later turn; read corrections back too/);
+      expect(anon).toMatch(/Ask for the number; if the caller cannot give one, log it without a number\./);
+      expect(anon).toMatch(/passed their question and number to the academy staff, without promising when anyone will call/);
+      expect(anon).not.toMatch(/business day/);
+
+      const sip = buildSystemPrompt({ ...base, variant, caller: { channel: 'phone', knownPhone: '+17185550123' } });
+      expect(sip).toMatch(/Caller id ends in zero one two three: ask if the number they are calling from is right, reading back only those four digits/);
+      expect(sip).not.toMatch(/seven one eight five five five zero one two three|7185550123/);
+
+      const form = buildSystemPrompt({ ...base, variant, caller: { channel: 'browser', knownPhone: '+17185550177' } });
+      expect(form).toMatch(/Web form number ends in zero one seven seven/);
+      expect(form).not.toMatch(/7185550177/);
     }
   });
 
