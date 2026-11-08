@@ -50,97 +50,101 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Status dot, never a pill (design README patterns). */
-.dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--off);
-  flex: 0 0 auto;
-}
-.dot-on {
-  background: var(--accent);
-}
-.dot-warning {
-  background: var(--warning);
-}
-.dot-danger {
-  background: var(--danger);
-}
+/* Component classes live in the components layer so Tailwind utilities on the same element win
+   (for example `p-0` on a square `.btn-secondary`). Unlayered rules would beat every utility. */
+@layer components {
+  /* Status dot, never a pill (design README patterns). */
+  .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--off);
+    flex: 0 0 auto;
+  }
+  .dot-on {
+    background: var(--accent);
+  }
+  .dot-warning {
+    background: var(--warning);
+  }
+  .dot-danger {
+    background: var(--danger);
+  }
 
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-}
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+  }
 
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 18px;
-  border-radius: var(--radius-control);
-  background: var(--accent);
-  color: #fff;
-  font-weight: 600;
-  font-size: 14px;
-}
-.btn-primary:hover {
-  background: var(--accent-strong);
-}
-.btn-primary:disabled {
-  background: var(--off);
-  cursor: not-allowed;
-}
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: var(--radius-control);
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .btn-primary:hover {
+    background: var(--accent-strong);
+  }
+  .btn-primary:disabled {
+    background: var(--off);
+    cursor: not-allowed;
+  }
 
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 14px;
-  border-radius: var(--radius-control);
-  border: 1px solid var(--control-border);
-  background: var(--surface);
-  color: var(--text);
-  font-weight: 500;
-  font-size: 14px;
-}
-.btn-secondary:hover {
-  border-color: var(--text-muted);
-}
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: var(--radius-control);
+    border: 1px solid var(--control-border);
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 500;
+    font-size: 14px;
+  }
+  .btn-secondary:hover {
+    border-color: var(--text-muted);
+  }
 
-.input {
-  height: 44px;
-  padding: 0 12px;
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-control);
-  background: var(--surface);
-  font-size: 14px;
-  color: var(--text);
-  width: 100%;
-}
-.input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-  border-color: var(--accent);
-}
+  .input {
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-control);
+    background: var(--surface);
+    font-size: 14px;
+    color: var(--text);
+    width: 100%;
+  }
+  .input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
 
-.label {
-  font-size: 13px;
-  font-weight: 500;
-}
+  .label {
+    font-size: 13px;
+    font-weight: 500;
+  }
 
-.caption {
-  font-size: 12px;
-  color: var(--text-muted);
-}
+  .caption {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
 
-.mono {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
 }

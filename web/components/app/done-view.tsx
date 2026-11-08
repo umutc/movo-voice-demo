@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { formatClock, Wordmark } from './site-header';
+import { clockTime, describeTool, longDate, memoryOutcome, offsetSeconds, shortId } from '@/lib/call-format';
+import { formatClock, SiteHeader } from './site-header';
 import type { StateSnapshot, TranscriptLine } from './types';
 
 interface CallViewData {
-  call: { id: string; identitySource: string; startedAt: string; endedAt: string | null; outcome: string | null; summary: string | null };
+  call: { id: string; identitySource: string; startedAt: string; endedAt: string | null; outcome: string | null; summary: string | null; familyId: string | null };
   family: { guardianName: string | null; isDemo: boolean; summary: string | null } | null;
   booking: { id: string; childName: string; childAge: number; programName: string; location: string; startsAt: string; coach: string; guardianName: string | null } | null;
 }
@@ -19,21 +20,12 @@ interface Props {
   onRestart: () => void;
 }
 
-const NY = 'America/New_York';
-
-function longDate(iso: string): string {
-  return new Intl.DateTimeFormat('en-US', { timeZone: NY, weekday: 'long', month: 'long', day: 'numeric' }).format(new Date(iso));
-}
-function clockTime(iso: string): string {
-  return new Intl.DateTimeFormat('en-US', { timeZone: NY, hour: 'numeric', minute: '2-digit' }).format(new Date(iso));
-}
-
 export function DoneView({ personaName, guardianName, snapshot, transcript, seconds, onRestart }: Props) {
   const callId = snapshot?.callId ?? null;
   const [data, setData] = useState<CallViewData | null>(null);
   const [tries, setTries] = useState(0);
 
-  // The summary is written a few seconds after hangup; poll the call row until it shows up.
+  // The summary is written a few seconds after hangup; poll the call row until the agent closes it.
   useEffect(() => {
     if (!callId) return;
     let cancelled = false;
@@ -44,7 +36,8 @@ export function DoneView({ personaName, guardianName, snapshot, transcript, seco
         const json = (await r.json()) as CallViewData;
         if (cancelled) return;
         setData(json);
-        if (!json.call.summary && tries < 10) setTimeout(() => setTries((t) => t + 1), 2500);
+        // closeCall writes endedAt and the summary in one update; once endedAt is set, nothing more is coming.
+        if (!json.call.endedAt && tries < 10) setTimeout(() => setTries((t) => t + 1), 2500);
       } catch {
         if (!cancelled && tries < 10) setTimeout(() => setTries((t) => t + 1), 2500);
       }
@@ -63,17 +56,19 @@ export function DoneView({ personaName, guardianName, snapshot, transcript, seco
       : 'Thanks for talking with Maya.';
   const transcriptText = transcript.map((l) => `${l.role === 'agent' ? personaName : guardianName}: ${l.text}`).join('\n');
   const toolSteps = snapshot?.toolCalls ?? [];
-  const startedAt = toolSteps[0] ? new Date(toolSteps[0].at).getTime() - 1000 : null;
+  // Step times are offsets from the call row's startedAt, written by the agent on the same clock as the tool log.
+  const callStart = data?.call.startedAt ?? null;
+  const memory = data ? memoryOutcome(data, personaName) : null;
+  const closed = Boolean(data?.call.endedAt) || tries >= 10;
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="flex items-center justify-between gap-6 border-b border-border bg-surface px-10 py-[18px]">
-        <Wordmark />
-        <span className="flex items-center gap-2 text-sm">
+      <SiteHeader>
+        <span className="flex items-center gap-2 text-sm text-text-muted">
           <span className="dot" />
-          Call ended <span className="mono text-text-muted">{formatClock(seconds)}</span>
+          Call ended <span className="mono text-[14px]">{formatClock(seconds)}</span>
         </span>
-      </header>
+      </SiteHeader>
       <main className="mx-auto flex w-full max-w-[1200px] flex-1 gap-5 px-10 py-8">
         <section className="flex min-w-0 flex-1 flex-col gap-5">
           <div className="card flex flex-col gap-6 p-7">
@@ -85,7 +80,7 @@ export function DoneView({ personaName, guardianName, snapshot, transcript, seco
               <h1 className="font-display m-0 text-[40px] leading-[1.05] font-bold tracking-[-0.02em]">{headline}</h1>
               {booking && (
                 <span className="caption">
-                  Confirmation <span className="mono text-text">BK-{booking.id.slice(0, 8).toUpperCase()}</span>. Saved while you were on the call.
+                  Confirmation <span className="mono text-text">BK-{shortId(booking.id)}</span>. Saved while you were on the call.
                 </span>
               )}
             </div>
@@ -136,51 +131,75 @@ export function DoneView({ personaName, guardianName, snapshot, transcript, seco
           <div className="card flex flex-col gap-2 p-6">
             <h2 className="font-display m-0 text-[15px] font-semibold">What {personaName} will remember</h2>
             {data?.call.summary ? (
-              <p className="m-0 text-[15px] leading-[1.55]">{data.call.summary}</p>
+              <p className="m-0 text-[15px] leading-[1.6] text-text-secondary">{data.call.summary}</p>
             ) : (
-              <p className="caption m-0">{callId ? 'Writing the summary now.' : 'No call record was created.'}</p>
+              <p className="caption m-0 text-[14px]">{!callId ? 'No call record was created.' : closed ? 'No summary was saved for this call.' : 'Writing the summary now.'}</p>
             )}
-            <span className="caption">Stored on the family record and read back to {personaName} at the start of the next call.</span>
+            {memory?.note && <span className="caption">{memory.note}</span>}
           </div>
         </section>
 
-        <aside className="card flex w-[340px] flex-none flex-col gap-5 self-start p-6">
-          <h2 className="font-display m-0 text-[15px] font-semibold">This call, step by step</h2>
-          <ol className="m-0 flex list-none flex-col gap-3 p-0">
-            <li className="flex gap-3 text-[13px]">
-              <span className="mono w-11 flex-none text-text-muted">00:00</span>
-              <div className="flex flex-col">
-                <span className="font-medium">Caller identified</span>
-                <span className="caption">
-                  {snapshot ? `${snapshot.identitySource}${snapshot.family.bound ? `, ${snapshot.family.isDemo ? 'demo family matched' : 'family record created'}` : ''}` : 'no agent state received'}
-                </span>
-              </div>
-            </li>
-            {toolSteps.map((t, i) => (
-              <li key={`${t.at}-${i}`} className="flex gap-3 text-[13px]">
-                <span className="mono w-11 flex-none text-text-muted">
-                  {startedAt ? formatClock(Math.max(0, Math.round((new Date(t.at).getTime() - startedAt) / 1000))) : ''}
-                </span>
-                <div className="flex flex-col">
-                  <span className="font-medium">{t.name.replace(/_/g, ' ')}</span>
-                  <span className="caption">
-                    {t.summary}
-                    {t.durationMs !== null ? ` · ${t.durationMs} ms` : ''}
-                  </span>
-                </div>
-              </li>
-            ))}
-            <li className="flex gap-3 text-[13px]">
-              <span className="mono w-11 flex-none text-text-muted">{formatClock(seconds)}</span>
-              <div className="flex flex-col">
-                <span className="font-medium">{data?.call.summary ? 'Summary saved' : 'Call ended'}</span>
-                <span className="caption">{data?.call.summary ? 'family.summary updated' : callId ? 'summary pending' : ''}</span>
-              </div>
-            </li>
+        <aside className="card flex w-[360px] flex-none flex-col self-start">
+          <h2 className="font-display m-0 border-b border-border px-5 py-4 text-[15px] font-semibold">This call, step by step</h2>
+          <ol className="m-0 flex list-none flex-col gap-3 px-5 py-4">
+            <Step time="00:00" label="Caller identified">
+              {snapshot ? (
+                <>
+                  <span className="mono text-[13px] whitespace-nowrap">{snapshot.identitySource}</span>
+                  {snapshot.family.bound ? `, ${snapshot.family.isDemo ? 'demo family matched' : 'new family record'}` : ', no family record'}
+                </>
+              ) : (
+                'no agent state received'
+              )}
+            </Step>
+            {toolSteps.map((t, i) => {
+              const step = describeTool(t);
+              const at = offsetSeconds(t.at, callStart, seconds);
+              return (
+                <Step key={`${t.at}-${i}`} time={at === null ? '' : formatClock(at)} label={step.label}>
+                  <span className="mono text-[13px] whitespace-nowrap">{t.name}</span>
+                  {step.parts.map((part, j) => (
+                    <span key={j}>
+                      {', '}
+                      <span className="whitespace-nowrap">{part}</span>
+                    </span>
+                  ))}
+                </Step>
+              );
+            })}
+            <Step time={formatClock(seconds)} label={data?.call.summary ? 'Summary saved' : 'Call ended'}>
+              {data?.call.summary ? (
+                memory?.familyUpdated ? (
+                  <>
+                    <span className="mono text-[13px]">family.summary</span> updated
+                  </>
+                ) : (
+                  'on the call record only'
+                )
+              ) : !callId ? (
+                ''
+              ) : closed ? (
+                'no summary written'
+              ) : (
+                'summary pending'
+              )}
+            </Step>
           </ol>
         </aside>
       </main>
       <footer className="border-t border-border px-10 py-4 text-xs text-text-muted">Prototype on LiveKit Agents. Fictional academy, programs, coaches and families.</footer>
     </div>
+  );
+}
+
+function Step({ time, label, children }: { time: string; label: string; children?: React.ReactNode }) {
+  return (
+    <li className="flex items-start gap-3">
+      <span className="mono w-11 flex-none pt-0.5 text-text-muted">{time}</span>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-[14px] font-medium">{label}</span>
+        {children ? <span className="text-[13px] leading-[1.45] text-text-muted">{children}</span> : null}
+      </div>
+    </li>
   );
 }

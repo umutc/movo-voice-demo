@@ -9,6 +9,14 @@
 - Data used: synthetic only. Name "Dana Whitfield", phones (718) 555-0171,
   0172, 0173, emails at example.com. The real demo phone was never typed.
 - Calls: 4 browser calls, each under 2 minutes (01:55, 01:39, 00:34, 00:14).
+- Screenshots reshot on 2026-11-07 (evening) after the call and done page
+  visual fixes, against a local production build (`next build` and
+  `next start`) that dispatched the same cloud agent. Same scenarios, same
+  synthetic name, phones (718) 555-0174 (B and E), 0175 (C), 0176 (D).
+  Reshoot calls: B 01:48, C 01:48, D 00:30, E 00:15. The text below
+  describes the first run; ids, durations and exact wording in the new
+  screenshots differ (for example B is BK-229C749D). The Playwright browser
+  had no microphone, so the mute button shows its muted state.
 
 ## Result table
 
@@ -59,11 +67,17 @@ Happened:
    read-back turn has the left accent border. The aside shows "read back".
 5. "Yes, please book it." gave `book_trial_class` (248 ms) and "Emma's free
    trial is set for Wednesday, November eleventh". The aside shows
-   "consumed"; Family shows "Dana Whitfield, new record".
+   "consumed" (status line "Booked"); Family shows "Dana Whitfield, new
+   record".
 6. "That's all, thanks, bye." ended the call at 01:55 with the Booked page:
    "Emma's free trial is set for Wednesday, November 11.", confirmation
    BK-1BE9ADC5, details, summary text present on first read (no polling
-   needed), step list ends with "Summary saved".
+   needed), step list ends with "Summary saved". After the reshoot fixes the
+   step list uses plain labels ("Programs looked up", "Booking written")
+   with the tool name in monospace, times count from the call start, and
+   the memory line says what really happens: for this browser caller the
+   summary is stored on the call and a new family record, and the next
+   browser call starts fresh (only the demo family is reopened).
 
 Result: PASS. Notes: the first typed line was "...seven and I'd like to
 book a free trial." (the word "class" was left out). The booked page has no
@@ -87,8 +101,10 @@ Happened:
   typed line (expected interruption).
 - "Wait, is parking free there?" gave "I don't have information about
   parking there. Would you like me to ask the academy staff to call you
-  back?" Aside: "Cleared: reply to the read-back was not a clear yes."
-  Interruptions: 1.
+  back?" Aside: the proposal status reads "Cleared, nothing will be
+  booked" with an orange dot, the steps are greyed out, and the reason
+  sits on its own line ("Reason: reply to the read-back was not a clear
+  yes."). Interruptions: 1.
 - "Yes." was taken as the answer to the callback offer, not as a booking
   confirmation. The agent called `request_human_callback` and asked "Would
   you still like me to book Emma's trial?" No `book_trial_class` call.
@@ -118,7 +134,10 @@ Happened:
   and trial classes; what is your child's name?"
 - Fee: "I don't have information about the annual registration fee. Would you
   like academy staff to call you back about it?" No number invented.
-- Goodbye ended the call at 00:34, outcome "No booking".
+- Goodbye ended the call at 00:34, outcome "No booking". The `end_call`
+  step now shows its real offset from the call start (00:25 of 00:30 in
+  the reshoot; the first run showed 00:01 because step times counted from
+  the first tool call).
 
 Result: PASS. Note: the saved summary says "The caller did not provide a
 guardian or child name", although the form name was Dana Whitfield. The
@@ -140,7 +159,10 @@ What this run shows: a second call with the SAME synthetic phone as B
 assistant; how can I help you with enrollment?"), the aside shows Family
 "not bound yet", and the saved summary of that call mentions no earlier
 booking. A
-self-reported non-demo number gets a fresh record, no memory.
+self-reported non-demo number gets a fresh record, no memory. The done page
+now says so: "No family record was made, so the next call starts fresh."
+It shows "read back to Maya at the start of the next call" only when the
+family is a demo family or the caller came in by phone.
 
 Result: PASS (non-demo path). The demo-family path is verified elsewhere,
 not in this run. Side finding: families created from browser calls have a

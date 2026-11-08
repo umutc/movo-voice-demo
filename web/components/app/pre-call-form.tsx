@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { formatPhone } from '@/lib/call-format';
 import { MicIcon, SiteHeader } from './site-header';
 import type { FormValues } from './types';
 
@@ -28,7 +29,7 @@ export function PreCallForm({ phoneNumber, personaName, onStart, error, notice, 
           </a>
         </nav>
       </SiteHeader>
-      <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-wrap gap-10 px-10 py-12">
+      <main className="mx-auto flex w-full max-w-[1200px] flex-1 flex-wrap items-start gap-10 px-10 py-12">
         <section className="flex min-w-0 flex-[1_1_440px] flex-col gap-6">
           <h1 className="font-display m-0 text-[54px] leading-[1.02] font-bold tracking-[-0.02em]">Book a free trial class by talking to {personaName}.</h1>
           <p className="m-0 max-w-[50ch] text-lg leading-[1.55] text-text-secondary">
@@ -139,7 +140,11 @@ export function PreCallForm({ phoneNumber, personaName, onStart, error, notice, 
           </form>
           {phoneNumber && (
             <p className="caption m-0 text-center text-[13px]">
-              Or call <strong className="text-text">{phoneNumber}</strong> from any phone.
+              Or call{' '}
+              <a href={`tel:${phoneNumber}`} className="font-semibold whitespace-nowrap text-text no-underline hover:text-accent-strong">
+                {formatPhone(phoneNumber)}
+              </a>{' '}
+              from any phone.
             </p>
           )}
         </section>
