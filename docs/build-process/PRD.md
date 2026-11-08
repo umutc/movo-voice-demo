@@ -6,7 +6,7 @@ Version 1.4, 2026-11-07. Owner: Umut. Builder: Claude Code. Changes from 1.3: pr
 
 Build, in one weekend, a working conversational voice agent that a parent can talk to by browser or phone to find a youth sports program and book a free trial class. The agent must demonstrate what a voice AI startup screens for: a real STT -> LLM -> TTS pipeline on LiveKit, telephony, tool calling with side effects, cross-call memory, latency measurement, tracing, and an eval harness.
 
-The target company's production stack (public sources) is LiveKit (voice), Deepgram (STT), OpenAI and Anthropic (LLM), Twilio (calls and SMS), Braintrust (quality monitoring), Supabase (auth), AWS Postgres, Redis, a TypeScript backend, Next.js on Vercel. This demo mirrors the voice and eval parts of that stack on free tiers. It is a prototype and the README must say so.
+A typical voice AI production stack combines LiveKit (voice), Deepgram (STT), OpenAI and Anthropic (LLM), Twilio (calls and SMS), Braintrust (quality monitoring), Supabase (auth), Postgres, Redis, a TypeScript backend and Next.js. This demo mirrors the voice and eval parts of such a stack on free tiers. It is a prototype, not production, and the README must say so.
 
 Success: a 2 to 3 minute screen recording showing a live call with a booking, an interruption handled cleanly, a returning caller recognized, a trace of that call, a latency table, and an eval scorecard. All reproducible from the repo.
 
@@ -41,7 +41,7 @@ A family inquired earlier but did not book. The agent calls the guardian: identi
 
 ### 3.3 Browser flow
 
-Pre-call form: guardian name, phone, email, consent checkbox (text modeled on the target company's demo page). Values are set on the token by the server endpoint as whitelisted participant attributes. The phone number from the form is a `self_reported` claim: it matches a family only if that family is flagged `is_demo` (seeded synthetic families). Families created by phone calls are never loaded from a form-entered number.
+Pre-call form: guardian name, phone, email, consent checkbox (text modeled on a typical voice-agent demo page). Values are set on the token by the server endpoint as whitelisted participant attributes. The phone number from the form is a `self_reported` claim: it matches a family only if that family is flagged `is_demo` (seeded synthetic families). Families created by phone calls are never loaded from a form-entered number.
 
 ## 4. Architecture
 

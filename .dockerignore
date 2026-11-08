@@ -41,8 +41,9 @@ Dockerfile*
 CLAUDE.md
 AGENTS.md
 README.md
-PRD.md
-TASKS.md
+LICENSE
+CONTRIBUTING.md
+SECURITY.md
 
 # Preflight-only stub used for `lk agent create/deploy` (never installed)
 package-lock.json
