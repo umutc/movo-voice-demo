@@ -6,6 +6,7 @@ import { TokenSource } from 'livekit-client';
 import { RoomAudioRenderer, SessionProvider, useSession, useSessionMessages } from '@livekit/components-react';
 import { CallView } from './call-view';
 import { DoneView } from './done-view';
+import { PAUSED_NOTICE } from '@/lib/pause';
 import { PreCallForm } from './pre-call-form';
 import { ATTR, type FormValues, type StateSnapshot, type TranscriptLine } from './types';
 
@@ -14,11 +15,12 @@ interface AppProps {
   phoneNumber: string | null;
   personaName: string;
   catalog: HomeCatalog | null;
+  paused: boolean;
 }
 
 type View = 'form' | 'call' | 'done';
 
-export function App({ agentName, phoneNumber, personaName, catalog }: AppProps) {
+export function App({ agentName, phoneNumber, personaName, catalog, paused }: AppProps) {
   const [view, setView] = useState<View>('form');
   const [form, setForm] = useState<FormValues>({ guardianName: '', phone: '', email: '', consent: false });
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +67,11 @@ export function App({ agentName, phoneNumber, personaName, catalog }: AppProps) 
         setNotice("Today's demo limit is reached. Try again tomorrow.");
         return;
       }
+      // The token route answers 503 { error: 'paused' } while DEMO_PAUSED is on.
+      if (err instanceof Error && err.message.includes(' received 503 ') && err.message.includes('paused')) {
+        setNotice(PAUSED_NOTICE);
+        return;
+      }
       setError(err instanceof Error ? err.message.replace(/^Error generating token from endpoint [^:]+: received \d+ \/ /, '') : 'Could not start the call');
     } finally {
       setStarting(false);
@@ -73,7 +80,7 @@ export function App({ agentName, phoneNumber, personaName, catalog }: AppProps) 
 
   return (
     <SessionProvider session={session}>
-      {view === 'form' && <PreCallForm phoneNumber={phoneNumber} personaName={personaName} catalog={catalog} onStart={start} error={error} notice={notice} starting={starting} />}
+      {view === 'form' && <PreCallForm paused={paused} phoneNumber={phoneNumber} personaName={personaName} catalog={catalog} onStart={start} error={error} notice={notice} starting={starting} />}
       {view === 'call' && (
         <CallView
           personaName={personaName}

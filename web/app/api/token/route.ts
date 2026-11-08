@@ -5,6 +5,7 @@ import { clientIpFromForwardedFor, limitOn } from 'db/usage';
 import { AccessToken, RoomAgentDispatch, RoomConfiguration, type VideoGrant } from 'livekit-server-sdk';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { z } from 'zod';
+import { demoPaused } from '../../../lib/pause.ts';
 
 // Browser token endpoint (PRD section 3.3). The client posts a TokenSourceRequest; only the four
 // whitelisted form attributes are copied onto the token, after validation. The grant gives no
@@ -101,6 +102,14 @@ export async function POST(req: Request) {
   }
   const origin = requestOrigin(req);
   if (!origin || !allowedOrigins().has(origin)) return new NextResponse('origin not allowed', { status: 403 });
+  // DEMO_PAUSED: stop before minting a token or writing demo_usage, so a direct call cannot start a session.
+  let paused: boolean;
+  try {
+    paused = demoPaused();
+  } catch {
+    return new NextResponse('DEMO_PAUSED is invalid', { status: 500 });
+  }
+  if (paused) return NextResponse.json({ error: 'paused' }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
   const url = process.env.LIVEKIT_URL;
   const apiKey = process.env.LIVEKIT_API_KEY;
   const apiSecret = process.env.LIVEKIT_API_SECRET;

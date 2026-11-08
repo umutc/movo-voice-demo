@@ -15,6 +15,7 @@ import { ATTR, PARTICIPANT_KIND_SIP, resolveIdentity, SessionContext } from './c
 import { admitPhoneCall, buildClosedLineAgent, startCallTimer } from './limits.ts';
 import { closeCall, makeLlmAffirmationJudge, openCall } from './memory.ts';
 import { attachMetrics } from './metrics.ts';
+import { endPausedJob } from './pause.ts';
 import { FakeDialPort, FakeSmsPort } from './ports/index.ts';
 import { buildEnrollmentAgent, wireSessionEvents } from './session.ts';
 import { STATE_TOPIC, StateChannel } from './state-channel.ts';
@@ -34,6 +35,11 @@ export default defineAgent({
   entry: async (ctx: JobContext) => {
     const cfg = loadConfig();
     const logger = log();
+    // DEMO_PAUSED: end the call before any database, session or inference work.
+    if (cfg.DEMO_PAUSED) {
+      await endPausedJob(ctx, logger);
+      return;
+    }
     const { port: db, close: closeDb } = openDb(cfg.DATABASE_URL);
     // Braintrust: SDK spans over OTLP plus manual call/tool spans (agent/src/tracing.ts). Off without a key.
     const tracing = setupTracing({

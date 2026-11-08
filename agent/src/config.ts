@@ -51,6 +51,9 @@ const baseSchema = z.object({
   DEMO_LIMIT_GLOBAL_PER_DAY: z.coerce.number().int().min(0).optional(),
   // Hard cap on one call. 0 turns the timer off.
   DEMO_MAX_CALL_SECONDS: z.coerce.number().int().min(0).default(180),
+  // Pause switch for the public demo (for example when the inference credit is used up): the
+  // agent ends every call at entry without a session, and the web token route answers 503.
+  DEMO_PAUSED: bool,
 });
 
 export type Config = z.infer<typeof baseSchema>;

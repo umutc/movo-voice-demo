@@ -30,6 +30,10 @@ The per-IP cap trusts `x-forwarded-for`, which a client can forge. The global ca
 Set the limits with `DEMO_LIMIT_PER_IP_PER_DAY`, `DEMO_LIMIT_GLOBAL_PER_DAY` and
 `DEMO_MAX_CALL_SECONDS`. Leave them unset in local development and no limit applies.
 
+To pause the demo, set `DEMO_PAUSED=true` in the Amplify app env and the agent secrets, then rebuild
+the web app and redeploy the agent. The form then disables "Start call", `/api/token` answers 503,
+and the agent hangs up at once with no inference. Set it back to `false` the same way to resume.
+
 ## System architecture
 
 ```mermaid

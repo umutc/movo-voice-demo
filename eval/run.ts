@@ -1,14 +1,19 @@
 // Scenario eval entrypoint: `pnpm eval --profile core|sms|guardian|outbound|all [--only <id>] [--no-braintrust]`.
 // Runs scenarios sequentially (shared LiveKit credit), prints a markdown scorecard, writes
-// eval/out/last-run.json and exits 1 when an invariant fails or a threshold is missed.
+// eval/out/last-run.json and exits 1 when an invariant fails or a threshold is missed. An
+// inference credit or quota error (429) aborts the run: exit 2 and an aborted marker, no scorecard.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Eval } from 'braintrust';
+import { CreditGuard, InferenceCreditExhausted, writeAbortedMarker } from './credit.ts';
 import { defaultLlm, runScenario, type HarnessResult } from './harness.ts';
 import type { InvariantResult } from './invariants.ts';
 import { loadScenarios, PROFILES, type Profile, type ScenarioDef } from './scenarios.ts';
 import { defaultJudgeLlm, scoreGoalCompletion, scoreGrounding, scoreInvariants, scoreStyle, type GoalResult, type GroundingResult, type StyleResult } from './scorers.ts';
 import { makeCallerLlm } from './simulated-caller.ts';
+
+const OUT_DIR = fileURLToPath(new URL('./out/', import.meta.url));
+const OUT_FILE = `${OUT_DIR}last-run.json`;
 
 const THRESHOLDS = { goal: 0.8, grounding: 0.9, styleFailuresAllowed: 1 } as const;
 
@@ -101,11 +106,14 @@ async function main(): Promise<void> {
   const agentLlm = defaultLlm();
   const callerLlm = makeCallerLlm();
   const judgeLlm = defaultJudgeLlm();
+  const credit = new CreditGuard().watch(agentLlm, 'agent LLM').watch(callerLlm, 'simulated caller').watch(judgeLlm, 'judge');
   const scores: ScenarioScore[] = [];
   for (const def of scenarios) {
     process.stderr.write(`running scenario ${def.id}: ${def.title}\n`);
     const result = await runScenario(def, { agentLlm, callerLlm });
+    credit.check();
     scores.push(await scoreOne(def, judgeLlm, result));
+    credit.check();
   }
 
   // ---- scorecard ----
@@ -144,9 +152,8 @@ async function main(): Promise<void> {
       `style ${scores.length - styleFails}/${scores.length} (at most ${THRESHOLDS.styleFailuresAllowed} fail), ${pass ? 'PASS' : `FAIL (${failures.join('; ')})`}`,
   );
 
-  const outDir = fileURLToPath(new URL('./out/', import.meta.url));
-  mkdirSync(outDir, { recursive: true });
-  const outFile = `${outDir}last-run.json`;
+  mkdirSync(OUT_DIR, { recursive: true });
+  const outFile = OUT_FILE;
   writeFileSync(
     outFile,
     JSON.stringify(
@@ -208,6 +215,21 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
+  if (err instanceof InferenceCreditExhausted) {
+    mkdirSync(OUT_DIR, { recursive: true });
+    writeAbortedMarker(OUT_FILE, err, profileForMarker(), new Date().toISOString().slice(0, 10));
+    console.error(`\n${err.message}`);
+    console.error(`Wrote an aborted marker to ${OUT_FILE} (no scorecard).`);
+    process.exit(2);
+  }
   console.error(err instanceof Error ? (err.stack ?? err.message) : String(err));
   process.exit(1);
 });
+
+function profileForMarker(): string {
+  try {
+    return parseArgs(process.argv.slice(2)).profile;
+  } catch {
+    return 'unknown';
+  }
+}

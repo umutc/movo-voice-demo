@@ -1,5 +1,6 @@
 import { getHomeCatalog, type HomeCatalog } from 'db/read';
 import { App } from '@/components/app/app';
+import { demoPaused } from '@/lib/pause';
 import { personaName } from '@/lib/site';
 
 // Read env at request time (Cloudflare secrets), not at build time.
@@ -21,6 +22,16 @@ async function loadCatalog(): Promise<HomeCatalog | null> {
   }
 }
 
+// An invalid DEMO_PAUSED keeps the demo paused: closed is the safe side for spend.
+function isPaused(): boolean {
+  try {
+    return demoPaused();
+  } catch (err) {
+    console.error('home page:', err instanceof Error ? err.message : err);
+    return true;
+  }
+}
+
 // Server component: reads env once and hands plain values to the client shell. Secrets stay
 // server-side; the token endpoint mints tokens.
 export default async function Page() {
@@ -31,6 +42,7 @@ export default async function Page() {
       phoneNumber={process.env.NEXT_PUBLIC_LIVEKIT_PHONE_NUMBER?.trim() || null}
       personaName={personaName()}
       catalog={catalog}
+      paused={isPaused()}
     />
   );
 }

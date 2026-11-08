@@ -2,6 +2,7 @@
 // override the LLM so the tricky scenarios (5, 8, 13) are deterministic.
 import { inference, llm } from '@livekit/agents';
 import { z } from 'zod';
+import { rethrowIfCredit } from './credit.ts';
 
 export const ScriptLine = z.object({
   when: z.enum(['start', 'after_readback', 'next']),
@@ -52,8 +53,9 @@ async function askCaller(model: llm.LLM, system: string, user: string): Promise<
       const result = await Promise.race([model.chat({ chatCtx }).collect().then((r) => r.text), timer]);
       const text = result?.trim();
       if (text) return text;
-    } catch {
-      // retry once
+    } catch (err) {
+      // A credit or quota error (429) stops the whole run; anything else is retried once.
+      rethrowIfCredit(err, 'simulated caller');
     }
   }
   throw new Error('simulated caller LLM returned nothing');

@@ -6,7 +6,7 @@ export default defineConfig({
       {
         test: {
           name: 'agent',
-          include: ['agent/test/**/*.test.ts', 'db/test/fake.test.ts', 'scripts/**/*.test.ts', 'web/lib/**/*.test.ts'],
+          include: ['agent/test/**/*.test.ts', 'db/test/fake.test.ts', 'scripts/**/*.test.ts', 'web/lib/**/*.test.ts', 'eval/*.test.ts'],
           testTimeout: 60_000,
           hookTimeout: 60_000,
         },

@@ -6,6 +6,7 @@ import { ATTR, PARTICIPANT_KIND_SIP, SessionContext, readbackMatchScore, READBAC
 import { makeLlmAffirmationJudge } from 'agent/src/memory.ts';
 import { FakeDialPort, FakeSmsPort } from 'agent/src/ports/index.ts';
 import { buildEnrollmentAgent, wireSessionEvents } from 'agent/src/session.ts';
+import { rethrowIfCredit } from './credit.ts';
 import { SimulatedCaller, type TranscriptLine } from './simulated-caller.ts';
 import type { ScenarioDef } from './scenarios.ts';
 import type { ScenarioRun, TimelineEvent } from './timeline.ts';
@@ -205,6 +206,8 @@ export async function runScenario(def: ScenarioDef, models: { agentLlm: llm.LLM;
       }
     }
   } catch (err) {
+    // An inference credit error is not an agent failure: stop the run instead of scoring it.
+    rethrowIfCredit(err, 'agent LLM');
     error = err instanceof Error ? err.message : String(err);
   } finally {
     try {
