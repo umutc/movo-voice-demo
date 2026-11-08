@@ -11,8 +11,10 @@ export type ScriptLine = z.infer<typeof ScriptLine>;
 
 export const DEFAULT_CALLER_MODEL = 'openai/gpt-6-luna';
 
+/** EVAL_CALLER_MODEL (a LiveKit Inference id) overrides the default caller model. */
 export function makeCallerLlm(): inference.LLM {
-  return new inference.LLM({ model: DEFAULT_CALLER_MODEL as inference.LLMModels });
+  const model = process.env['EVAL_CALLER_MODEL']?.trim() || DEFAULT_CALLER_MODEL;
+  return new inference.LLM({ model: model as inference.LLMModels });
 }
 
 export interface TranscriptLine {

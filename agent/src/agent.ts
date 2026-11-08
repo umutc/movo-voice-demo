@@ -62,11 +62,12 @@ export default defineAgent({
     const sc = new SessionContext({
       identity,
       db,
-      // SMS and dial stay fake until FEATURE_SMS / FEATURE_OUTBOUND wire real adapters (Phase 9, stretch).
+      // SMS and dial are fakes only: no Twilio adapter and no SMS tool exist yet.
       sms: new FakeSmsPort(),
       dial: new FakeDialPort(),
       judge: makeLlmAffirmationJudge(llmModel),
-      features: { sms: cfg.FEATURE_SMS, guardian: false },
+      // SMS stays off in the prompt whatever FEATURE_SMS says, so the agent never offers a text it cannot send.
+      features: { sms: false, guardian: false },
       roomName: ctx.room.name ?? 'unknown',
     });
     // Daily demo cap for phone calls. Browser calls were counted by the web token route, so only

@@ -290,6 +290,8 @@ export function scoreInvariants(run: ScenarioRun, harnessError: string | null): 
   return results;
 }
 
+/** EVAL_JUDGE_MODEL (a LiveKit Inference id) picks the judge; it falls back to the agent's LK_LLM_MODEL. */
 export function defaultJudgeLlm(): inference.LLM {
-  return new inference.LLM({ model: (process.env['LK_LLM_MODEL'] || 'openai/gpt-6.1-terra') as inference.LLMModels });
+  const model = process.env['EVAL_JUDGE_MODEL']?.trim() || process.env['LK_LLM_MODEL']?.trim() || 'openai/gpt-6.1-terra';
+  return new inference.LLM({ model: model as inference.LLMModels });
 }

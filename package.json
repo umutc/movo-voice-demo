@@ -14,7 +14,6 @@
     "test:db": "node --env-file=.env ./node_modules/vitest/vitest.mjs run --project db",
     "eval": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs eval/run.ts",
     "report:latency": "node --env-file-if-exists=.env ./node_modules/tsx/dist/cli.mjs scripts/report-latency.ts",
-    "call": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/call.ts",
     "db:generate": "pnpm -F db generate",
     "db:migrate": "pnpm -F db migrate",
     "db:seed": "pnpm -F db seed",

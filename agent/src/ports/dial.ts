@@ -1,5 +1,5 @@
-// DialPort: the only way the agent places an outbound call. Real adapter (LiveKit SIP
-// participant) is wired in agent.ts when FEATURE_OUTBOUND is on. Tests and evals get the fake.
+// DialPort: the only way the agent would place an outbound call. Only the fake exists: agent.ts
+// wires it for live runs too, and no LiveKit SIP adapter is built yet.
 
 export type DialResult =
   | { ok: true; participantIdentity: string }

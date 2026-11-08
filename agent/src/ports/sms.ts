@@ -1,5 +1,5 @@
-// SmsPort: the only way the agent sends a text message. Real adapter (Twilio) is wired in
-// agent.ts for live runs when FEATURE_SMS is on. Tests and evals always get the fake.
+// SmsPort: the only way the agent would send a text message. Only the fake exists: agent.ts wires
+// it for live runs too, and no Twilio adapter or SMS tool is built yet.
 
 export type SmsResult = { ok: true; messageId: string } | { ok: false; reason: string };
 

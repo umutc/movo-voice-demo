@@ -31,11 +31,7 @@ const baseSchema = z.object({
   BRAINTRUST_API_KEY: z.string().optional(),
   BRAINTRUST_PROJECT: z.string().min(1).default('movo-voice-demo'),
 
-  OPENAI_API_KEY: z.string().optional(),
-  ANTHROPIC_API_KEY: z.string().optional(),
-  EVAL_JUDGE_MODEL: z.string().min(1).default('gpt-6.1-terra'),
-  EVAL_CALLER_MODEL: z.string().min(1).default('gpt-6-luna'),
-
+  // No SMS tool exists yet: agent.ts keeps SMS off in the prompt even when this flag is on.
   FEATURE_SMS: bool,
   FEATURE_OUTBOUND: bool,
 
@@ -50,7 +46,6 @@ const baseSchema = z.object({
   DEMO_ACADEMY_NAME: z.string().min(1).default('Brooklyn Youth Soccer Academy'),
   DEMO_AGENT_PERSONA_NAME: z.string().min(1).default('Maya'),
   DEMO_RETURNING_PHONE: e164.optional(),
-  DEMO_SECOND_PHONE: e164.optional(),
 
   // Spend guard for the public demo. Unset or 0 means no daily cap (local development).
   DEMO_LIMIT_GLOBAL_PER_DAY: z.coerce.number().int().min(0).optional(),
