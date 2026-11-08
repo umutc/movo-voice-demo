@@ -41,21 +41,20 @@ flowchart LR
     TK["/api/token<br/>origin check, rate limits,<br/>whitelisted attributes<br/>identity: self_reported"]
     CO["/console<br/>read-only, password"]
   end
-  TK -->|"token, WebRTC"| ROOM
+  TK -.->|token| BR
+  BR -->|WebRTC| ROOM
   SIP -->|SIP| ROOM
   ROOM["LiveKit Cloud room"] -->|dispatch| W
-  subgraph W["Agent worker<br/>Node, @livekit/agents"]
-    WK["VAD + turn detection<br/>prompt, tools<br/>read-back state machine<br/>metrics"]
-  end
+  W["Agent worker<br/>Node, @livekit/agents<br/>VAD + turn detection,<br/>prompt, tools, read-back<br/>state machine, metrics"]
   W -->|"STT, LLM, TTS"| INF["LiveKit Inference<br/>deepgram/nova-3<br/>openai/gpt-6.1-terra<br/>deepgram/aura-2:athena"]
   W --> DB[("Supabase Postgres<br/>bookings, calls,<br/>demo_usage, ...")]
   AMP --> DB
   W --> BT["Braintrust"]
   EV["pnpm eval"] --> BT
-  TW["Twilio<br/>optional, not connected"] -.-> SIP
+  W -.->|"outbound SIP, SMS"| TW["Twilio<br/>optional, not connected"]
 ```
 
-Dashed lines are paths that exist but are not connected.
+The dotted token edge is the HTTPS reply to the browser. The Twilio edge exists in code but is not connected.
 
 ## What it does
 
@@ -65,7 +64,7 @@ Dashed lines are paths that exist but are not connected.
 - Remembers a returning family and writes a post-call summary.
 - Hands unanswerable questions to a human callback request.
 - Writes bookings with locking and idempotency on Postgres.
-- Records Braintrust traces, per-turn latency files and a 10-scenario eval.
+- Records Braintrust traces, per-turn latency files and a 13-scenario eval.
 - Shows calls, callbacks, families and quality in a read-only console.
 
 Not done or not verified: outbound calls and SMS (Twilio is not connected). See the
@@ -103,9 +102,18 @@ pnpm report:latency        # p50/p95 from metrics/*.json
 pnpm telephony:render      # ${ENV} templates -> telephony/out/
 ```
 
+Debug a conversation without audio, from `agent/`:
+
+```
+lk agent debugger start src/agent.ts
+lk agent debugger say "Hi, I want to sign up my daughter."
+lk agent debugger stop --chat-history
+```
+
 ## Deploy
 
-- Agent: deploy to LiveKit Cloud with `livekit.toml`.
+- Agent: run `lk agent create` once from the repo root (it reads `livekit.toml` and the
+  `Dockerfile`), then `lk agent deploy` for each update.
 - Phone: run `lk number search --country-code US` and `lk number purchase --numbers +1...`.
   Then run `pnpm telephony:render` and
   `lk sip dispatch create telephony/out/dispatch-rule.json`. Assign the rule to the number in the
