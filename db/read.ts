@@ -405,3 +405,69 @@ export async function listConsoleFamilies(url: string): Promise<ConsoleFamily[]>
     await close();
   }
 }
+
+export interface HomeProgram {
+  id: string;
+  name: string;
+  ageMin: number;
+  ageMax: number;
+  location: string;
+  days: string;
+  monthlyPriceCents: number;
+  /** Soonest future trial slot with a free seat, or null. */
+  nextOpenSlot: { startsAt: string; seatsLeft: number } | null;
+}
+
+export interface HomeCoach {
+  name: string;
+  programs: string[];
+}
+
+export interface HomeCatalog {
+  programs: HomeProgram[];
+  coaches: HomeCoach[];
+}
+
+/** Programs and coaches for the parent home page. Coaches are the distinct names on upcoming trial slots. */
+export async function getHomeCatalog(url: string, now: Date = new Date()): Promise<HomeCatalog> {
+  const { db, close } = createDb(url, { max: 1 });
+  try {
+    const [programRows, slotRows] = await Promise.all([
+      db.select().from(programs).orderBy(asc(programs.ageMin), asc(programs.name)),
+      db
+        .select({ programId: trialSlots.programId, startsAt: trialSlots.startsAt, coach: trialSlots.coach, capacity: trialSlots.capacity, bookedCount: trialSlots.bookedCount })
+        .from(trialSlots)
+        .where(gte(trialSlots.startsAt, now))
+        .orderBy(asc(trialSlots.startsAt)),
+    ]);
+    const nameById = new Map(programRows.map((p) => [p.id, p.name]));
+    const coachPrograms = new Map<string, Set<string>>();
+    for (const s of slotRows) {
+      const name = nameById.get(s.programId);
+      if (!name) continue;
+      const set = coachPrograms.get(s.coach) ?? new Set<string>();
+      set.add(name);
+      coachPrograms.set(s.coach, set);
+    }
+    return {
+      programs: programRows.map((p) => {
+        const next = slotRows.find((s) => s.programId === p.id && s.bookedCount < s.capacity);
+        return {
+          id: p.id,
+          name: p.name,
+          ageMin: p.ageMin,
+          ageMax: p.ageMax,
+          location: p.location,
+          days: p.days,
+          monthlyPriceCents: p.monthlyPriceCents,
+          nextOpenSlot: next ? { startsAt: next.startsAt.toISOString(), seatsLeft: next.capacity - next.bookedCount } : null,
+        };
+      }),
+      coaches: [...coachPrograms.entries()]
+        .map(([name, set]) => ({ name, programs: [...set].sort() }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    };
+  } finally {
+    await close();
+  }
+}

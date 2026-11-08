@@ -50,6 +50,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Header nav anchors; no motion when the viewer asks for less. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 /* Component classes live in the components layer so Tailwind utilities on the same element win
    (for example `p-0` on a square `.btn-secondary`). Unlayered rules would beat every utility. */
 @layer components {

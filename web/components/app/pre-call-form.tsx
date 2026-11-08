@@ -2,28 +2,31 @@
 
 import { useState } from 'react';
 import { formatPhone } from '@/lib/call-format';
+import type { HomeCatalog } from 'db/read';
+import { HomeSections } from './home-sections';
 import { MicIcon, SiteHeader } from './site-header';
 import type { FormValues } from './types';
 
 interface Props {
   phoneNumber: string | null;
   personaName: string;
+  catalog: HomeCatalog | null;
   onStart: (values: FormValues) => Promise<void>;
   error: string | null;
   notice: string | null;
   starting: boolean;
 }
 
-export function PreCallForm({ phoneNumber, personaName, onStart, error, notice, starting }: Props) {
+export function PreCallForm({ phoneNumber, personaName, catalog, onStart, error, notice, starting }: Props) {
   const [values, setValues] = useState<FormValues>({ guardianName: '', phone: '', email: '', consent: false });
   const canStart = values.guardianName.trim().length >= 2 && values.consent && !starting;
 
   return (
     <div className="flex min-h-svh flex-col">
       <SiteHeader full>
-        <nav aria-label="Site" className="flex gap-6 text-sm font-medium text-text-secondary">
-          <a href="#programs">Programs</a>
-          <a href="#coaches">Coaches</a>
+        <nav aria-label="Site" className="flex gap-4 text-sm font-medium whitespace-nowrap text-text-secondary sm:gap-6">
+          {catalog && catalog.programs.length > 0 && <a href="#programs">Programs</a>}
+          {catalog && catalog.coaches.length > 0 && <a href="#coaches">Coaches</a>}
           <a href="#trial" className="text-accent">
             Free trial
           </a>
@@ -51,7 +54,7 @@ export function PreCallForm({ phoneNumber, personaName, onStart, error, notice, 
           </p>
         </section>
 
-        <section id="trial" className="card flex min-w-0 flex-[0_1_440px] flex-col gap-5 p-7">
+        <section id="trial" className="card flex scroll-mt-6 min-w-0 flex-[0_1_440px] flex-col gap-5 p-7">
           <div className="flex flex-col gap-1">
             <h2 className="font-display m-0 text-[22px] font-semibold">Start a call</h2>
             <p className="caption m-0 text-sm">About two minutes. Uses your microphone.</p>
@@ -149,6 +152,7 @@ export function PreCallForm({ phoneNumber, personaName, onStart, error, notice, 
           )}
         </section>
       </main>
+      {catalog && <HomeSections catalog={catalog} />}
       <footer className="flex flex-wrap justify-between gap-4 border-t border-border px-10 py-4 text-xs text-text-muted">
         <span>Prototype on LiveKit Agents. Not a production system.</span>
         <span>Fictional academy, programs, coaches and families.</span>

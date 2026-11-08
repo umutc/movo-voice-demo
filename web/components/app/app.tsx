@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import type { HomeCatalog } from 'db/read';
 import { TokenSource } from 'livekit-client';
 import { RoomAudioRenderer, SessionProvider, useSession, useSessionMessages } from '@livekit/components-react';
 import { CallView } from './call-view';
@@ -14,11 +15,12 @@ interface AppProps {
   academyName: string;
   personaName: string;
   pipeline: Pipeline;
+  catalog: HomeCatalog | null;
 }
 
 type View = 'form' | 'call' | 'done';
 
-export function App({ agentName, phoneNumber, personaName, pipeline }: AppProps) {
+export function App({ agentName, phoneNumber, personaName, pipeline, catalog }: AppProps) {
   const [view, setView] = useState<View>('form');
   const [form, setForm] = useState<FormValues>({ guardianName: '', phone: '', email: '', consent: false });
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +75,7 @@ export function App({ agentName, phoneNumber, personaName, pipeline }: AppProps)
 
   return (
     <SessionProvider session={session}>
-      {view === 'form' && <PreCallForm phoneNumber={phoneNumber} personaName={personaName} onStart={start} error={error} notice={notice} starting={starting} />}
+      {view === 'form' && <PreCallForm phoneNumber={phoneNumber} personaName={personaName} catalog={catalog} onStart={start} error={error} notice={notice} starting={starting} />}
       {view === 'call' && (
         <CallView
           personaName={personaName}
