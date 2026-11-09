@@ -46,7 +46,7 @@ describe('inference credit errors', () => {
     const caller = new SimulatedCaller(model, persona);
     const turn = caller.nextTurn([], { readbackCount: 0, lastAgentIsReadback: false });
     await expect(turn).rejects.toBeInstanceOf(InferenceCreditExhausted);
-    await expect(turn).rejects.toThrow(/LiveKit Inference credit exhausted \(429 MaxGatewayCredits, simulated caller\): eval aborted, results are not a score/);
+    await expect(turn).rejects.toThrow(/Model provider credit exhausted \(429 MaxGatewayCredits, simulated caller\): eval aborted, results are not a score/);
     expect(calls()).toBe(1);
   });
 

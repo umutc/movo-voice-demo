@@ -12,11 +12,14 @@ import { fileURLToPath } from 'node:url';
 import { openDb } from 'db';
 import { DrizzleOps } from 'db/ops';
 import { agentAlerter, autoPause, watchProviderErrors } from './alerts.ts';
-import { loadConfig, splitTtsModel } from './config.ts';
+import { loadConfig } from './config.ts';
 import { ATTR, PARTICIPANT_KIND_SIP, resolveIdentity, SessionContext } from './context.ts';
 import { admitPhoneCall, buildClosedLineAgent, startCallTimer } from './limits.ts';
 import { closeCall, makeLlmAffirmationJudge, openCall } from './memory.ts';
 import { attachMetrics } from './metrics.ts';
+import { buildModels } from './models.ts';
+import { attachUsageMeter, pipelineLabels } from './cost.ts';
+import { runPostCallBudget } from './budget.ts';
 import { checkDbPause, endPausedJob } from './pause.ts';
 import { FakeDialPort, FakeSmsPort } from './ports/index.ts';
 import { buildEnrollmentAgent, wireSessionEvents } from './session.ts';
@@ -80,7 +83,12 @@ export default defineAgent({
     });
     const direction = identity.source === 'caller_id_only' ? 'inbound' : identity.reason === 'follow_up' ? 'outbound' : 'browser';
 
-    const llmModel = new inference.LLM({ model: cfg.LK_LLM_MODEL });
+    // MODEL_PROVIDER: LiveKit Inference or the direct Deepgram and OpenAI plugins (agent/src/models.ts).
+    const models = buildModels(cfg);
+    const llmModel = models.llm;
+    // Counts STT audio, TTS characters and LLM tokens from each model's own metrics, so the
+    // post-call summary and the affirmation judge (same LLM instance) are counted too.
+    const usageMeter = attachUsageMeter(models);
     const sc = new SessionContext({
       identity,
       db,
@@ -119,9 +127,8 @@ export default defineAgent({
         })
       : buildClosedLineAgent();
 
-    const tts = splitTtsModel(cfg.LK_TTS_MODEL);
-    const sttModel = new inference.STT({ model: cfg.LK_STT_MODEL, language: 'en' });
-    const ttsModel = new inference.TTS({ model: tts.model, ...(tts.voice ? { voice: tts.voice } : {}), language: 'en' });
+    const sttModel = models.stt;
+    const ttsModel = models.tts;
     const session = new AgentSession<SessionContext>({
       userData: sc,
       vad: new inference.VAD({ model: 'silero' }),
@@ -147,7 +154,8 @@ export default defineAgent({
     tracing?.attach(session);
 
     // "Under the hood" snapshots for the browser demo: real state only, best effort delivery.
-    const state = new StateChannel({ stt: cfg.LK_STT_MODEL, llm: cfg.LK_LLM_MODEL, tts: cfg.LK_TTS_MODEL });
+    const pipeline = pipelineLabels(cfg);
+    const state = new StateChannel(pipeline);
     if (!ctx.isFakeJob) {
       state.attach({
         send: async (text) => {
@@ -162,7 +170,7 @@ export default defineAgent({
     });
     session.on(AgentSessionEventTypes.FunctionToolsExecuted, () => state.push(sc));
     // Per-turn latency from ChatMessage.metrics and plugin metrics -> metrics/<callId>.json (FR-10).
-    const metrics = attachMetrics(session, sc, state, { stt: cfg.LK_STT_MODEL, llm: cfg.LK_LLM_MODEL, tts: cfg.LK_TTS_MODEL });
+    const metrics = attachMetrics(session, sc, state, pipeline);
 
     // Summary + call row finish run once, whichever comes first: session close or job shutdown.
     let finalized: Promise<void> | null = null;
@@ -177,7 +185,11 @@ export default defineAgent({
         }
         const { summary, error } = await closeCall(sc, llmModel, session.history.items, { metrics: metrics.snapshot(), traceId: tracing?.traceId ?? null });
         tracing?.finish(sc, { summary, outcome: sc.outcome });
+        // Cost, budget and balance checks: after the call ended (the caller is gone), bounded by a
+        // timeout, never throws. Awaited only so the database stays open until it settles.
+        const budget = runPostCallBudget({ cfg, ops, alerter, logger, callId: sc.callId, usage: usageMeter.totals(), now: sc.now() });
         logger.info({ reason, outcome: sc.outcome, summaryWritten: Boolean(summary), error, metricsPath, turns: metrics.turns.length, usage: session.usage }, 'call closed');
+        await budget;
         await closeDb();
       })();
       return finalized;

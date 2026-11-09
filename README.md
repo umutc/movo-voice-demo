@@ -58,6 +58,31 @@ never blocks or breaks a call: errors are logged and the publish has a short tim
 
 The SNS `Publish` call is signed with SigV4 in `db/alerts.ts`, so no AWS SDK package is installed.
 
+## Model providers and budgets
+
+`MODEL_PROVIDER` picks how the agent reaches its models:
+
+- `inference` (default): LiveKit Inference with `LIVEKIT_API_KEY` alone, paid from the LiveKit credit.
+- `direct`: the Deepgram plugin for STT and TTS and the OpenAI plugin for the LLM, paid from the
+  owner's own accounts. Needs `DEEPGRAM_API_KEY` and `OPENAI_API_KEY`.
+
+The public demo runs `direct`, because the Build-plan inference credit (2.50 USD a month) ran out.
+Hosting, WebRTC, the phone number and turn detection stay free on Build. The model ids
+(`LK_STT_MODEL`, `LK_LLM_MODEL`, `LK_TTS_MODEL`) are the same in both modes.
+
+After each call the agent estimates its cost from the recorded STT minutes, TTS characters and LLM
+tokens, using a dated price table in `agent/src/config.ts`. In `direct` mode it stores one row per
+provider in `provider_spend` and sends these alerts (once per threshold per month):
+
+- `budget_openai_50`, `budget_openai_80`: month-to-date estimate against `OPENAI_BUDGET_USD` (5).
+- `budget_deepgram_50`, `budget_deepgram_80`: against `DEEPGRAM_BUDGET_USD` (200).
+- `deepgram_balance_50`, `deepgram_balance_10`: the real Deepgram balance, read with
+  `DEEPGRAM_BILLING_API_KEY` (scope `billing:read`).
+- `deepgram_balance_2`: below 2 USD the agent also pauses the demo (`demo_state`).
+
+The automatic pause also catches OpenAI `insufficient_quota` and Deepgram 402 credit errors. These
+checks run after the call ends, with a timeout, and never slow a call.
+
 ## System architecture
 
 ```mermaid
@@ -74,7 +99,7 @@ flowchart LR
   SIP -->|SIP| ROOM
   ROOM["LiveKit Cloud room"] -->|dispatch| W
   W["Agent worker<br/>Node, @livekit/agents<br/>VAD + turn detection,<br/>prompt, tools, read-back<br/>state machine, metrics"]
-  W -->|"STT, LLM, TTS"| INF["LiveKit Inference<br/>deepgram/nova-3<br/>openai/gpt-6.1-terra<br/>deepgram/aura-2:athena"]
+  W -->|"STT, LLM, TTS"| INF["MODEL_PROVIDER=direct:<br/>Deepgram nova-3 + Aura-2 athena,<br/>OpenAI gpt-6.1-terra<br/>(or LiveKit Inference)"]
   W --> DB[("Supabase Postgres<br/>bookings, calls,<br/>demo_usage, ...")]
   AMP --> DB
   W --> BT["Braintrust"]

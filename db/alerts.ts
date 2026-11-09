@@ -7,7 +7,18 @@ import { createHash, createHmac } from 'node:crypto';
 import { z } from 'zod';
 import type { AlertLogPort } from './ops.ts';
 
-export type AlertKind = 'provider_credit' | 'daily_limit' | 'fail_closed' | 'test';
+export type AlertKind =
+  | 'provider_credit'
+  | 'daily_limit'
+  | 'fail_closed'
+  | 'test'
+  | 'budget_openai_50'
+  | 'budget_openai_80'
+  | 'budget_deepgram_50'
+  | 'budget_deepgram_80'
+  | 'deepgram_balance_50'
+  | 'deepgram_balance_10'
+  | 'deepgram_balance_2';
 
 export interface AlertMessage {
   subject: string;
@@ -30,9 +41,44 @@ const consoleLog: AlertLog = (level, msg, fields) => {
 
 const TEXT: Record<AlertKind, { what: string; cause: string; next: string }> = {
   provider_credit: {
-    what: 'The agent got a credit, quota or auth error from LiveKit Inference and paused the demo automatically (demo_state row). Visitors see a paused notice and the phone line hangs up at once.',
-    cause: 'The LiveKit Inference credit ran out, or the API key lost access.',
+    what: 'The agent got a credit, quota or auth error from a model provider (LiveKit Inference, OpenAI or Deepgram, see Detail) and paused the demo automatically (demo_state row). Visitors see a paused notice and the phone line hangs up at once.',
+    cause: 'The provider credit ran out (LiveKit Inference credit, OpenAI prepaid credit, Deepgram balance), or an API key lost access.',
     next: 'Top up the credit or fix the key, then run `pnpm demo:resume`. Check the state with `pnpm demo:status`.',
+  },
+  budget_openai_50: {
+    what: 'The estimated OpenAI cost this month passed 50 percent of OPENAI_BUDGET_USD.',
+    cause: 'Demo traffic. The estimate comes from recorded token counts and the price table in agent/src/config.ts.',
+    next: 'Nothing yet. Check the real balance at platform.openai.com. Auto-recharge is off, so the prepaid credit is the hard limit.',
+  },
+  budget_openai_80: {
+    what: 'The estimated OpenAI cost this month passed 80 percent of OPENAI_BUDGET_USD.',
+    cause: 'Demo traffic. The estimate comes from recorded token counts and the price table in agent/src/config.ts.',
+    next: 'Top up the OpenAI credit or pause with `pnpm demo:pause -- "<reason>"` before the credit runs out.',
+  },
+  budget_deepgram_50: {
+    what: 'The estimated Deepgram cost this month passed 50 percent of DEEPGRAM_BUDGET_USD.',
+    cause: 'Demo traffic. The estimate comes from recorded audio minutes and characters.',
+    next: 'Nothing yet. The real balance check sends its own alerts.',
+  },
+  budget_deepgram_80: {
+    what: 'The estimated Deepgram cost this month passed 80 percent of DEEPGRAM_BUDGET_USD.',
+    cause: 'Demo traffic. The estimate comes from recorded audio minutes and characters.',
+    next: 'Check the balance in the Deepgram console. Pause with `pnpm demo:pause -- "<reason>"` if needed.',
+  },
+  deepgram_balance_50: {
+    what: 'The Deepgram account balance dropped below 50 USD (read after a call).',
+    cause: 'Demo traffic used the Deepgram credit.',
+    next: 'Plan a top-up. The demo pauses itself below 2 USD.',
+  },
+  deepgram_balance_10: {
+    what: 'The Deepgram account balance dropped below 10 USD (read after a call).',
+    cause: 'Demo traffic used the Deepgram credit.',
+    next: 'Top up the Deepgram balance soon. The demo pauses itself below 2 USD.',
+  },
+  deepgram_balance_2: {
+    what: 'The Deepgram account balance dropped below 2 USD, so the agent paused the demo (demo_state row).',
+    cause: 'Demo traffic used the Deepgram credit.',
+    next: 'Top up the Deepgram balance, then run `pnpm demo:resume`.',
   },
   daily_limit: {
     what: 'The global daily call cap (DEMO_LIMIT_GLOBAL_PER_DAY) was reached. New calls are refused until 00:00 UTC.',
@@ -70,7 +116,7 @@ export function buildAlert(kind: AlertKind, input: { now: Date; detail?: string 
   if (detail) lines.push(`Detail: ${detail}`);
   const note = cleanDetail(input.note);
   if (note) lines.push(`Note: ${note}`);
-  lines.push('', 'Sent by movo-voice-demo (prototype). The same kind sends at most once per ALERTS_COOLDOWN_HOURS.');
+  lines.push('', 'Sent by movo-voice-demo (prototype). The same kind sends at most once per ALERTS_COOLDOWN_HOURS (budget and balance kinds: once per month).');
   return { subject: `[movo-voice-demo] ${kind}`, body: lines.join('\n') };
 }
 
@@ -304,9 +350,18 @@ export class Alerter {
    * alerts table; when the database fails, the in-process throttle decides instead, so an outage
    * produces one email per process, not one per request. Never throws; bounded by the timeouts.
    */
-  async send(kind: AlertKind, input: { detail?: string | null; note?: string | null } = {}): Promise<AlertOutcome> {
+  async send(
+    kind: AlertKind,
+    input: { detail?: string | null; note?: string | null } = {},
+    dedupe: { key?: string; cooldownMs?: number } = {},
+  ): Promise<AlertOutcome> {
+    // `dedupe.key` replaces the kind as the dedupe key (for example budget_openai_50:2026-11 for
+    // once per month); `dedupe.cooldownMs` replaces the configured cooldown.
+    const key = dedupe.key ?? kind;
+    let claimedAt: Date | null = null;
     try {
-      const { port, log, cooldownMs, throttle, logger } = this.o;
+      const { port, log, throttle, logger } = this.o;
+      const cooldownMs = dedupe.cooldownMs ?? this.o.cooldownMs;
       if (!port.enabled) {
         await port.publish(buildAlert(kind, { now: this.o.now(), ...input })).catch(() => {});
         return 'disabled';
@@ -316,18 +371,26 @@ export class Alerter {
       let claimed: boolean | null = null;
       if (log) {
         try {
-          claimed = await withTimeout(log.claimAlert({ kind, detail, now, cooldownMs }), this.o.claimTimeoutMs, 'alert dedupe');
+          claimed = await withTimeout(log.claimAlert({ kind: key, detail, now, cooldownMs }), this.o.claimTimeoutMs, 'alert dedupe');
         } catch (err) {
           logger('warn', 'alert dedupe unavailable, using the in-process throttle', { kind, error: errText(err) });
         }
       }
       if (claimed === false) return 'duplicate';
+      if (claimed === true) claimedAt = now;
       if (claimed === null) {
-        const last = throttle.get(kind);
+        const last = throttle.get(key);
         if (last !== undefined && now.getTime() - last < cooldownMs) return 'throttled';
       }
-      throttle.set(kind, now.getTime());
-      await withTimeout(port.publish(buildAlert(kind, { now, ...input })), this.o.publishTimeoutMs, 'alert publish');
+      throttle.set(key, now.getTime());
+      try {
+        await withTimeout(port.publish(buildAlert(kind, { now, ...input })), this.o.publishTimeoutMs, 'alert publish');
+      } catch (err) {
+        // The send failed: undo the dedupe (alert row and throttle) so the next attempt can send.
+        if (throttle.get(key) === now.getTime()) throttle.delete(key);
+        if (claimedAt && log) await withTimeout(log.releaseAlert({ kind: key, now: claimedAt }), this.o.claimTimeoutMs, 'alert release').catch(() => {});
+        throw err;
+      }
       logger('info', 'alert sent', { kind });
       return 'sent';
     } catch (err) {

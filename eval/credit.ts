@@ -1,5 +1,5 @@
-// Inference credit guard for the eval. A 429 or quota error from LiveKit Inference (for example
-// MaxGatewayCredits) is not an agent failure: the run stops, exits nonzero, and writes an aborted
+// Credit guard for the eval. A 429, 402 or quota error from the model provider (LiveKit Inference
+// MaxGatewayCredits, OpenAI insufficient_quota, a Deepgram 402) is not an agent failure: the run stops, exits nonzero, and writes an aborted
 // marker instead of a scorecard. The SDK retries a 429 and then throws a generic "failed after N
 // attempts" error, so the guard also listens to each LLM's "error" event, which carries the
 // original status error. The classification lives in agent/src/provider-errors.ts (shared with the
@@ -16,7 +16,7 @@ export function isCreditError(err: unknown): boolean {
 export class InferenceCreditExhausted extends Error {
   readonly source: string;
   constructor(source: string, cause?: unknown) {
-    super(`LiveKit Inference credit exhausted (${detail(cause)}, ${source}): eval aborted, results are not a score`, { cause });
+    super(`Model provider credit exhausted (${detail(cause)}, ${source}): eval aborted, results are not a score`, { cause });
     this.name = 'InferenceCreditExhausted';
     this.source = source;
   }

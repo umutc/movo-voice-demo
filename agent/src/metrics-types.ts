@@ -17,7 +17,7 @@ export interface CallMetricsFile {
   identitySource: string;
   startedAt: string;
   endedAt: string | null;
-  pipeline: { stt: string; llm: string; tts: string };
+  pipeline: { stt: string; llm: string; tts: string; provider?: 'inference' | 'direct' };
   turns: TurnMetrics[];
   interruptions: number;
   usage: unknown;

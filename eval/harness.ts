@@ -1,11 +1,13 @@
 // Runs one scenario: real prompt, real tool handlers and real LLM over fake ports, driven by the
 // simulated caller through the SDK testing API (`session.run`). Records a ScenarioRun.
-import { AgentSession, inference, initializeLogger, type llm } from '@livekit/agents';
+import { AgentSession, initializeLogger, type llm } from '@livekit/agents';
+import { makeLlm, providerFromEnv } from 'agent/src/models.ts';
 import { FakeDb } from 'db/fake';
 import { ATTR, PARTICIPANT_KIND_SIP, SessionContext, readbackMatchScore, READBACK_MATCH_THRESHOLD, resolveIdentity, type Identity } from 'agent/src/context.ts';
 import { makeLlmAffirmationJudge } from 'agent/src/memory.ts';
 import { FakeDialPort, FakeSmsPort } from 'agent/src/ports/index.ts';
 import { buildEnrollmentAgent, wireSessionEvents } from 'agent/src/session.ts';
+import { lastFourWords } from 'agent/src/prompt.ts';
 import { rethrowIfCredit } from './credit.ts';
 import { SimulatedCaller, type TranscriptLine } from './simulated-caller.ts';
 import type { ScenarioDef } from './scenarios.ts';
@@ -28,12 +30,18 @@ export interface HarnessResult {
   transcript: TranscriptLine[];
   /** Text of the memory the agent was given, an allowed grounding source. */
   memoryText: string;
+  /**
+   * The last four digits of the known caller number (caller id or form number) as the prompt gives
+   * them to the agent for the callback number check, an allowed grounding source. Empty without one.
+   */
+  callerIdText: string;
   finalState: FinalState;
   error: string | null;
 }
 
-export function defaultLlm(): inference.LLM {
-  return new inference.LLM({ model: (process.env['LK_LLM_MODEL'] || 'openai/gpt-6.1-terra') as inference.LLMModels });
+/** The agent LLM: LK_LLM_MODEL over LiveKit Inference, or OpenAI directly when MODEL_PROVIDER=direct. */
+export function defaultLlm(): llm.LLM {
+  return makeLlm(process.env['LK_LLM_MODEL']?.trim() || 'openai/gpt-6.1-terra', providerFromEnv(), process.env['OPENAI_API_KEY']?.trim());
 }
 
 async function buildIdentity(def: ScenarioDef, db: FakeDb): Promise<Identity> {
@@ -230,5 +238,5 @@ export async function runScenario(def: ScenarioDef, models: { agentLlm: llm.LLM;
     turnsUsed,
     endedBy,
   };
-  return { run, transcript, memoryText, finalState: { bookings: db.bookings.size, callbacks: db.callbacks.size, smsSent: sms.sent.length }, error };
+  return { run, transcript, memoryText, callerIdText: sc.identity.phone ? lastFourWords(sc.identity.phone) : '', finalState: { bookings: db.bookings.size, callbacks: db.callbacks.size, smsSent: sms.sent.length }, error };
 }

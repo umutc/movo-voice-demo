@@ -1,6 +1,7 @@
 // Scorers for the scenario eval: goal completion (LLM judge), grounding and style
 // (deterministic), and the must-pass invariants (wrapped from eval/invariants.ts).
-import { inference, type llm } from '@livekit/agents';
+import type { llm } from '@livekit/agents';
+import { makeLlm, providerFromEnv } from 'agent/src/models.ts';
 import { askLlm } from 'agent/src/memory.ts';
 import { checkInvariants, type InvariantResult } from './invariants.ts';
 import type { ScenarioDef } from './scenarios.ts';
@@ -196,7 +197,8 @@ export function scoreGrounding(r: HarnessResult): GroundingResult {
     t.filter((e) => e.kind === 'assistant').map((e) => (e as { text: string }).text),
     {
       toolOutputs: t.filter((e) => e.kind === 'tool_output' && !e.isError).map((e) => (e as { output: string }).output).join('\n'),
-      memory: r.memoryText,
+      // The caller-id last four digits come from the prompt (the callback number check), like memory.
+      memory: [r.memoryText, r.callerIdText].filter(Boolean).join(' '),
       userText: t.filter((e) => e.kind === 'user').map((e) => (e as { text: string }).text).join(' '),
     },
   );
@@ -290,8 +292,11 @@ export function scoreInvariants(run: ScenarioRun, harnessError: string | null): 
   return results;
 }
 
-/** EVAL_JUDGE_MODEL (a LiveKit Inference id) picks the judge; it falls back to the agent's LK_LLM_MODEL. */
-export function defaultJudgeLlm(): inference.LLM {
+/**
+ * EVAL_JUDGE_MODEL (a `provider/model` id) picks the judge; it falls back to the agent's
+ * LK_LLM_MODEL. MODEL_PROVIDER=direct calls OpenAI directly instead of LiveKit Inference.
+ */
+export function defaultJudgeLlm(): llm.LLM {
   const model = process.env['EVAL_JUDGE_MODEL']?.trim() || process.env['LK_LLM_MODEL']?.trim() || 'openai/gpt-6.1-terra';
-  return new inference.LLM({ model: model as inference.LLMModels });
+  return makeLlm(model, providerFromEnv(), process.env['OPENAI_API_KEY']?.trim());
 }

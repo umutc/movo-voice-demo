@@ -87,7 +87,7 @@ describe('Alerter never throws into the caller', () => {
     port.fail = new Error('boom');
     const alerter = new Alerter({
       port,
-      log: { claimAlert: () => Promise.reject(new Error('db')) },
+      log: { claimAlert: () => Promise.reject(new Error('db')), releaseAlert: () => Promise.reject(new Error('db')) },
       cooldownMs: HOUR,
       throttle: new Map(),
       logger: () => {
@@ -188,5 +188,39 @@ describe('SigV4 and the SNS adapter', () => {
     expect(call.headers.authorization).not.toContain('secret');
     status = 403;
     await expect(port.publish({ subject: 's', body: 'b' })).rejects.toThrow('SNS publish failed: HTTP 403 AuthorizationError');
+  });
+});
+
+describe('Alerter dedupe after a failed send', () => {
+  it('a failed publish releases the alert row, so the next attempt can send', async () => {
+    const { port, ops, alerter } = setup();
+    port.fail = new Error('SNS down');
+    expect(await alerter.send('fail_closed')).toBe('failed');
+    expect(ops.alerts).toEqual([]);
+    port.fail = null;
+    expect(await alerter.send('fail_closed')).toBe('sent');
+    expect(await alerter.send('fail_closed')).toBe('duplicate');
+    expect(ops.alerts.map((a) => a.kind)).toEqual(['fail_closed']);
+  });
+
+  it('a failed publish with the database down clears the throttle too', async () => {
+    const { port, ops, alerter } = setup();
+    ops.down = true;
+    port.fail = new Error('SNS down');
+    expect(await alerter.send('fail_closed')).toBe('failed');
+    port.fail = null;
+    expect(await alerter.send('fail_closed')).toBe('sent');
+    expect(await alerter.send('fail_closed')).toBe('throttled');
+  });
+
+  it('a dedupe key and cooldown override the kind and the configured cooldown', async () => {
+    const { port, ops, alerter, advance } = setup();
+    const month = 32 * 24 * HOUR;
+    expect(await alerter.send('budget_openai_50', {}, { key: 'budget_openai_50:2026-11', cooldownMs: month })).toBe('sent');
+    advance(7 * HOUR);
+    expect(await alerter.send('budget_openai_50', {}, { key: 'budget_openai_50:2026-11', cooldownMs: month })).toBe('duplicate');
+    expect(await alerter.send('budget_openai_50', {}, { key: 'budget_openai_50:2026-12', cooldownMs: month })).toBe('sent');
+    expect(ops.alerts.map((a) => a.kind)).toEqual(['budget_openai_50:2026-11', 'budget_openai_50:2026-12']);
+    expect(port.sent.map((m) => m.subject)).toEqual(['[movo-voice-demo] budget_openai_50', '[movo-voice-demo] budget_openai_50']);
   });
 });

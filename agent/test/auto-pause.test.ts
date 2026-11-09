@@ -30,6 +30,9 @@ vi.mock('db/ops', async (importOriginal) => {
     claimAlert(input: Parameters<FakeOps['claimAlert']>[0]) {
       return shared.ops.claimAlert(input);
     }
+    releaseAlert(input: Parameters<FakeOps['releaseAlert']>[0]) {
+      return shared.ops.releaseAlert(input);
+    }
   }
   return { ...actual, DrizzleOps };
 });

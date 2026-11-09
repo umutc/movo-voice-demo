@@ -74,3 +74,28 @@ describe('DrizzleOps pause row and alert dedupe', () => {
     expect(await ops.claimAlert({ kind: 'fail_closed', detail: null, now: new Date(now.getTime() + 6 * hour + 1), cooldownMs: 6 * hour })).toBe(true);
   });
 });
+
+describe('DrizzleOps alert release and provider spend', () => {
+  it('releaseAlert removes the claimed row, so the next claim succeeds', async () => {
+    const ops = new DrizzleOps(db);
+    const now = new Date('2026-11-09T12:00:00Z');
+    expect(await ops.claimAlert({ kind: 'fail_closed', detail: null, now, cooldownMs: 3_600_000 })).toBe(true);
+    await ops.releaseAlert({ kind: 'fail_closed', now });
+    expect(await ops.claimAlert({ kind: 'fail_closed', detail: null, now: new Date(now.getTime() + 1000), cooldownMs: 3_600_000 })).toBe(true);
+  });
+
+  it('recordSpend is idempotent per call and provider; monthSpend sums one UTC month', async () => {
+    const ops = new DrizzleOps(db);
+    const call = await h.port.insertCall({ direction: 'browser', identitySource: 'self_reported', phone: null, familyId: null, roomName: 'r-spend', startedAt: new Date('2026-11-09T11:59:00Z') });
+    const p = call.id;
+    const now = new Date('2026-11-09T12:00:00Z');
+    await ops.recordSpend({ callId: p, provider: 'openai', month: '2026-11', usd: 0.0165, usage: { outputTokens: 1000 }, now });
+    await ops.recordSpend({ callId: p, provider: 'openai', month: '2026-11', usd: 0.0165, usage: {}, now });
+    await ops.recordSpend({ callId: p, provider: 'deepgram', month: '2026-11', usd: 0.0672, usage: {}, now });
+    await ops.recordSpend({ callId: null, provider: 'openai', month: '2026-10', usd: 3, usage: {}, now });
+    const nov = await ops.monthSpend('2026-11');
+    expect(nov.openai).toBeCloseTo(0.0165, 9);
+    expect(nov.deepgram).toBeCloseTo(0.0672, 9);
+    expect((await ops.monthSpend('2026-12')).openai).toBe(0);
+  });
+});

@@ -1,6 +1,8 @@
-// Shared harness for behavior tests: real prompt, real tools, real LLM over LiveKit Inference,
+// Shared harness for behavior tests: real prompt, real tools, real LLM (LiveKit Inference, or
+// OpenAI directly when MODEL_PROVIDER=direct),
 // fakes for every port. Never a real SMS, dial or database write.
-import { AgentSession, inference, initializeLogger } from '@livekit/agents';
+import { AgentSession, initializeLogger, type llm } from '@livekit/agents';
+import { makeLlm } from '../src/models.ts';
 import { FakeDb } from 'db/fake';
 import { ATTR, PARTICIPANT_KIND_SIP, SessionContext, resolveIdentity, type AffirmationJudge } from '../src/context.ts';
 import { loadConfig } from '../src/config.ts';
@@ -15,14 +17,14 @@ export const DEMO = '+17185550100';
 export const scriptedJudge: AffirmationJudge = async (_readback, reply) =>
   /^\s*(yes|yeah|yep|yup|sure|please|correct|that'?s right|go ahead|book it)/i.test(reply) ? 'yes' : /^\s*(no|nope|not)/i.test(reply) ? 'no' : 'other';
 
-export function testLlm(): inference.LLM {
+export function testLlm(): llm.LLM {
   const cfg = loadConfig();
-  return new inference.LLM({ model: cfg.LK_LLM_MODEL });
+  return makeLlm(cfg.LK_LLM_MODEL, cfg.MODEL_PROVIDER, cfg.OPENAI_API_KEY);
 }
 
 export type IdentityKind = 'sip-demo' | 'sip-new' | 'browser-demo' | 'browser-real-phone' | 'browser-anon';
 
-export async function makeHarness(kind: IdentityKind, opts: { judge?: AffirmationJudge; llm?: inference.LLM } = {}) {
+export async function makeHarness(kind: IdentityKind, opts: { judge?: AffirmationJudge; llm?: llm.LLM } = {}) {
   const db = new FakeDb({ demoPhone: DEMO });
   const realPhone = '+17185550177';
   if (kind === 'browser-real-phone') {

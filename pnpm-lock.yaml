@@ -174,6 +174,12 @@ importers:
       '@livekit/agents':
         specifier: 1.9.5
         version: 1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7)
+      '@livekit/agents-plugin-deepgram':
+        specifier: 1.9.5
+        version: 1.9.5(@livekit/agents@1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7))(@livekit/rtc-node@1.2.1)
+      '@livekit/agents-plugin-openai':
+        specifier: 1.9.5
+        version: 1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/agents@1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7))(@livekit/rtc-node@1.2.1)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(zod@4.6.7)
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.0
@@ -202,6 +208,12 @@ importers:
       '@livekit/agents':
         specifier: 1.9.5
         version: 1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7)
+      '@livekit/agents-plugin-deepgram':
+        specifier: 1.9.5
+        version: 1.9.5(@livekit/agents@1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7))(@livekit/rtc-node@1.2.1)
+      '@livekit/agents-plugin-openai':
+        specifier: 1.9.5
+        version: 1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/agents@1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7))(@livekit/rtc-node@1.2.1)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(zod@4.6.7)
       '@livekit/rtc-node':
         specifier: ^1.2.1
         version: 1.2.1
@@ -254,6 +266,9 @@ importers:
       '@livekit/agents':
         specifier: 1.9.5
         version: 1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7)
+      '@livekit/agents-plugin-openai':
+        specifier: 1.9.5
+        version: 1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/agents@1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7))(@livekit/rtc-node@1.2.1)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(zod@4.6.7)
       agent:
         specifier: workspace:*
         version: link:../agent
@@ -1562,6 +1577,19 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
+
+  '@livekit/agents-plugin-deepgram@1.9.5':
+    resolution: {integrity: sha512-71Hhy53h39KJ5nt4IFH6mwM+HlsuO4j0rDr6ORfAitt/6FavlqD5EEC7twcjyYCsNkvs0f/kKjjBoRFUa2ce6w==}
+    peerDependencies:
+      '@livekit/agents': 1.9.5
+      '@livekit/rtc-node': ^1.1.0
+
+  '@livekit/agents-plugin-openai@1.9.5':
+    resolution: {integrity: sha512-gFn3hf9YYEQmZG+EUyriZNPdR7a50saWfbrTzb7F4pXAv/RxgdcI1Cc0EebM8b7TA0+a98nQLm2IJqp1bwNs7Q==}
+    peerDependencies:
+      '@livekit/agents': 1.9.5
+      '@livekit/rtc-node': ^1.1.0
+      zod: ^3.25.76 || ^4.1.8
 
   '@livekit/agents@1.9.5':
     resolution: {integrity: sha512-Tza6Ks1PkEA+mUiKSNwMPOtWfqbeo/YdLV8pMAC/BSBNJRc4BWN68TOS8Iy5HhuCU0HcyVr57gPZQShE31+3cg==}
@@ -5459,6 +5487,29 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
+
+  '@livekit/agents-plugin-deepgram@1.9.5(@livekit/agents@1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7))(@livekit/rtc-node@1.2.1)':
+    dependencies:
+      '@livekit/agents': 1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7)
+      '@livekit/rtc-node': 1.2.1
+      ws: 8.22.1
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@livekit/agents-plugin-openai@1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/agents@1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7))(@livekit/rtc-node@1.2.1)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(zod@4.6.7)':
+    dependencies:
+      '@livekit/agents': 1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7)
+      '@livekit/rtc-node': 1.2.1
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.93)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(ws@8.22.1)(zod@4.6.7)
+      ws: 8.22.1
+      zod: 4.6.7
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
+      - bufferutil
+      - utf-8-validate
 
   '@livekit/agents@1.9.5(@aws-sdk/credential-provider-node@3.972.93)(@livekit/rtc-node@1.2.1)(@modelcontextprotocol/client@2.4.0)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.5)(@types/node@24.19.2)(supports-color@7.2.0)(typescript@5.9.3)(zod@4.6.7)':
     dependencies:

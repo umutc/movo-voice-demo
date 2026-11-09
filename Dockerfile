@@ -5,7 +5,7 @@
 # - installs only the worker (agent) and its workspace dependency (db), prod deps only
 # - no build step: Node 24 strips erasable TypeScript, so `node agent/src/agent.ts` runs as is
 # - no `livekit-agents download-files`: the worker uses inference.VAD and
-#   inference.TurnDetector and installs no @livekit/agents-plugin-* packages
+#   inference.TurnDetector; the deepgram and openai plugins are API clients with no model files
 ARG NODE_VERSION=24
 FROM node:${NODE_VERSION}-slim AS base
 

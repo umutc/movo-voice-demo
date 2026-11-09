@@ -78,7 +78,7 @@ export async function getCallView(url: string, callId: string): Promise<CallView
 
 /** Subset of agent/src/metrics-types.ts CallMetricsFile, as stored in calls.metrics. */
 export interface CallMetricsJson {
-  pipeline?: { stt?: string; llm?: string; tts?: string };
+  pipeline?: { stt?: string; llm?: string; tts?: string; provider?: 'inference' | 'direct' };
   turns?: {
     e2eMs?: number | null;
     endOfTurnMs?: number | null;
@@ -266,7 +266,10 @@ export async function listCallMetrics(url: string): Promise<{ id: string; starte
 }
 
 /** Pipeline the agent recorded on its most recent call that has metrics, with that call's start time. */
-export async function getLatestPipeline(url: string): Promise<{ startedAt: string; pipeline: { stt: string | null; llm: string | null; tts: string | null } } | null> {
+// `provider` is missing on calls recorded before MODEL_PROVIDER existed; those ran on LiveKit Inference.
+export async function getLatestPipeline(
+  url: string,
+): Promise<{ startedAt: string; pipeline: { stt: string | null; llm: string | null; tts: string | null; provider: 'inference' | 'direct' } } | null> {
   const { db, close } = createDb(url, { max: 1 });
   try {
     const [row] = await db
@@ -277,7 +280,7 @@ export async function getLatestPipeline(url: string): Promise<{ startedAt: strin
       .limit(1);
     const p = (row?.metrics as CallMetricsJson | null | undefined)?.pipeline;
     if (!row || !p) return null;
-    return { startedAt: row.startedAt.toISOString(), pipeline: { stt: p.stt ?? null, llm: p.llm ?? null, tts: p.tts ?? null } };
+    return { startedAt: row.startedAt.toISOString(), pipeline: { stt: p.stt ?? null, llm: p.llm ?? null, tts: p.tts ?? null, provider: p.provider === 'direct' ? 'direct' : 'inference' } };
   } finally {
     await close();
   }

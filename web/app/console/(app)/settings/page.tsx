@@ -45,7 +45,7 @@ export default async function SettingsPage() {
           <span className="caption border-t border-divider px-6 py-3">Web config (DEMO_AGENT_PERSONA_NAME, DEMO_ACADEMY_NAME). The agent reads its own copy.</span>
         </section>
         <section className="card flex flex-col pb-2">
-          <SectionHead title="Models, through LiveKit Inference" />
+          <SectionHead title={latest?.pipeline.provider === 'direct' ? 'Models, through Deepgram and OpenAI' : 'Models, through LiveKit Inference'} />
           {latest ? (
             <>
               {latest.pipeline.stt && <Field label="Speech to text" value={latest.pipeline.stt} mono />}

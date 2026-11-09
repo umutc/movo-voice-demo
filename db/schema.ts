@@ -1,7 +1,7 @@
 // Drizzle schema per PRD section 8. No pgEnum: enum types are schema-qualified in generated SQL
 // and would break the isolated `test` schema. Enumerated columns are text, typed in db/port.ts.
 import { sql } from 'drizzle-orm';
-import { boolean, check, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, doublePrecision, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const families = pgTable(
   'families',
@@ -162,4 +162,21 @@ export const demoState = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [check('demo_state_single_row', sql`${t.id} = 1`)],
+).enableRLS();
+
+// Estimated provider cost per call (MODEL_PROVIDER=direct only), one row per call and provider.
+// month is the UTC month ('2026-11') the budget alerts sum over. usage holds the counted units
+// (audio minutes, characters, tokens). Written by the agent after the call ends.
+export const providerSpend = pgTable(
+  'provider_spend',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    callId: uuid('call_id').references(() => calls.id, { onDelete: 'set null' }),
+    provider: text('provider').notNull(),
+    month: text('month').notNull(),
+    usd: doublePrecision('usd').notNull(),
+    usage: jsonb('usage'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('provider_spend_call_provider_unique').on(t.callId, t.provider), index('provider_spend_month_idx').on(t.provider, t.month)],
 ).enableRLS();

@@ -18,7 +18,7 @@ export interface StateSnapshot {
   roomName: string;
   identitySource: 'caller_id_only' | 'self_reported';
   family: { bound: boolean; label: string | null; isDemo: boolean | null; hasHistory: boolean };
-  pipeline: { stt: string; llm: string; tts: string };
+  pipeline: { stt: string; llm: string; tts: string; provider?: 'inference' | 'direct' };
   proposal: { state: string; summary: string | null; clearedBecause: string | null; readbackText: string | null } | null;
   toolCalls: { name: string; ok: boolean; summary: string; durationMs: number | null; at: string }[];
   lastTurn: TurnLatency | null;

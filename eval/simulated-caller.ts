@@ -1,6 +1,8 @@
-// Simulated caller: a persona LLM (LiveKit Inference) that plays the parent. Scripted lines
+// Simulated caller: a persona LLM (LiveKit Inference, or OpenAI directly when
+// MODEL_PROVIDER=direct) that plays the parent. Scripted lines
 // override the LLM so the tricky scenarios (5, 8, 13) are deterministic.
-import { inference, llm } from '@livekit/agents';
+import { llm } from '@livekit/agents';
+import { makeLlm, providerFromEnv } from 'agent/src/models.ts';
 import { z } from 'zod';
 import { rethrowIfCredit } from './credit.ts';
 
@@ -12,10 +14,10 @@ export type ScriptLine = z.infer<typeof ScriptLine>;
 
 export const DEFAULT_CALLER_MODEL = 'openai/gpt-6-luna';
 
-/** EVAL_CALLER_MODEL (a LiveKit Inference id) overrides the default caller model. */
-export function makeCallerLlm(): inference.LLM {
+/** EVAL_CALLER_MODEL (a `provider/model` id) overrides the default caller model. */
+export function makeCallerLlm(): llm.LLM {
   const model = process.env['EVAL_CALLER_MODEL']?.trim() || DEFAULT_CALLER_MODEL;
-  return new inference.LLM({ model: model as inference.LLMModels });
+  return makeLlm(model, providerFromEnv(), process.env['OPENAI_API_KEY']?.trim());
 }
 
 export interface TranscriptLine {
