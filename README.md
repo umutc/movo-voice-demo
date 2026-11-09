@@ -34,6 +34,30 @@ To pause the demo, set `DEMO_PAUSED=true` in the Amplify app env and the agent s
 the web app and redeploy the agent. The form then disables "Start call", `/api/token` answers 503,
 and the agent hangs up at once with no inference. Set it back to `false` the same way to resume.
 
+The `demo_state` table is a second switch that needs no deploy. The demo is paused when either
+switch says so:
+
+- `pnpm demo:pause -- "<reason>"` pauses, `pnpm demo:resume` resumes, `pnpm demo:status` prints the row.
+- The agent pauses it on its own when a model (STT, LLM or TTS) returns a credit, quota or auth
+  error, and ends that call. A bare 429 pauses only after the SDK's retries give up.
+
+## Alerts
+
+An email goes to the owner through an AWS SNS topic when:
+
+- `provider_credit`: a model returned a credit, quota or auth error. The same email says the demo
+  was paused automatically (auto pause is part of this kind, not a separate one).
+- `daily_limit`: the global daily cap was reached (token route or agent).
+- `fail_closed`: a usage count or pause check failed, so calls are refused (token route or agent).
+
+The same kind sends at most once per `ALERTS_COOLDOWN_HOURS` (default 6), tracked in the `alerts`
+table. If the database is down, an in-process throttle keeps it to one email per process. An alert
+never blocks or breaks a call: errors are logged and the publish has a short timeout. Without the
+`ALERTS_*` variables, alerts are off and the agent logs that once. `pnpm alerts:test` sends one
+`test` alert.
+
+The SNS `Publish` call is signed with SigV4 in `db/alerts.ts`, so no AWS SDK package is installed.
+
 ## System architecture
 
 ```mermaid

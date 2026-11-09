@@ -20,7 +20,11 @@
     "telephony:render": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/render-telephony.ts",
     "db:smoke": "pnpm -F db smoke",
     "start": "node agent/src/agent.ts start",
-    "metrics:export": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/export-metrics.ts"
+    "metrics:export": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/export-metrics.ts",
+    "demo:pause": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/demo-state.ts pause",
+    "demo:resume": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/demo-state.ts resume",
+    "demo:status": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/demo-state.ts status",
+    "alerts:test": "node --env-file=.env ./node_modules/tsx/dist/cli.mjs scripts/send-test-alert.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

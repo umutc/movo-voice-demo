@@ -10,12 +10,14 @@ import {
 } from '@livekit/agents';
 import { fileURLToPath } from 'node:url';
 import { openDb } from 'db';
+import { DrizzleOps } from 'db/ops';
+import { agentAlerter, autoPause, watchProviderErrors } from './alerts.ts';
 import { loadConfig, splitTtsModel } from './config.ts';
 import { ATTR, PARTICIPANT_KIND_SIP, resolveIdentity, SessionContext } from './context.ts';
 import { admitPhoneCall, buildClosedLineAgent, startCallTimer } from './limits.ts';
 import { closeCall, makeLlmAffirmationJudge, openCall } from './memory.ts';
 import { attachMetrics } from './metrics.ts';
-import { endPausedJob } from './pause.ts';
+import { checkDbPause, endPausedJob } from './pause.ts';
 import { FakeDialPort, FakeSmsPort } from './ports/index.ts';
 import { buildEnrollmentAgent, wireSessionEvents } from './session.ts';
 import { STATE_TOPIC, StateChannel } from './state-channel.ts';
@@ -40,7 +42,21 @@ export default defineAgent({
       await endPausedJob(ctx, logger);
       return;
     }
-    const { port: db, close: closeDb } = openDb(cfg.DATABASE_URL);
+    const { port: db, db: drizzleDb, close: closeDb } = openDb(cfg.DATABASE_URL);
+    // Ops state on the same connection: the demo_state pause row and the alert dedupe log.
+    const ops = new DrizzleOps(drizzleDb);
+    const alerter = agentAlerter(ops, logger);
+    // demo_state: the database pause switch. A failed check fails closed: the call ends and one
+    // fail_closed alert goes out (deduped), because the spend guards cannot run without the database.
+    const pause = await checkDbPause(ops);
+    if (!pause.ok || pause.state.paused) {
+      if (!pause.ok) logger.warn({ error: pause.error }, 'pause check failed: refusing the call (fail closed)');
+      await endPausedJob(ctx, logger, pause.ok ? 'demo_state' : 'pause check failed', async () => {
+        if (!pause.ok) await alerter.send('fail_closed', { detail: 'agent pause check' });
+        await closeDb();
+      });
+      return;
+    }
     // Braintrust: SDK spans over OTLP plus manual call/tool spans (agent/src/tracing.ts). Off without a key.
     const tracing = setupTracing({
       enabled: Boolean(cfg.BRAINTRUST_API_KEY),
@@ -86,6 +102,9 @@ export default defineAgent({
       tracing?.startCall(sc);
     } else {
       logger.warn({ error: admission.error ?? null }, 'phone call refused: daily demo limit');
+      // A failed count is fail_closed; a full day is daily_limit. Not awaited: the caller hears the
+      // closed-line sentence at once, and Alerter.send never throws.
+      void alerter.send(admission.error ? 'fail_closed' : 'daily_limit', { detail: admission.error ? 'agent phone usage count' : 'phone call refused' });
     }
     logger.info(
       { identitySource: identity.source, hasPhone: Boolean(identity.phone), familyBound: Boolean(sc.familyId), history: sc.familyHasHistory, callId: sc.callId },
@@ -101,12 +120,14 @@ export default defineAgent({
       : buildClosedLineAgent();
 
     const tts = splitTtsModel(cfg.LK_TTS_MODEL);
+    const sttModel = new inference.STT({ model: cfg.LK_STT_MODEL, language: 'en' });
+    const ttsModel = new inference.TTS({ model: tts.model, ...(tts.voice ? { voice: tts.voice } : {}), language: 'en' });
     const session = new AgentSession<SessionContext>({
       userData: sc,
       vad: new inference.VAD({ model: 'silero' }),
-      stt: new inference.STT({ model: cfg.LK_STT_MODEL, language: 'en' }),
+      stt: sttModel,
       llm: llmModel,
-      tts: new inference.TTS({ model: tts.model, ...(tts.voice ? { voice: tts.voice } : {}), language: 'en' }),
+      tts: ttsModel,
       ttsTextTransforms: ['filter_markdown', 'filter_emoji'],
       turnHandling: {
         turnDetection: new inference.TurnDetector(),
@@ -116,6 +137,13 @@ export default defineAgent({
       },
     });
     wireSessionEvents(session, sc);
+    // Automatic pause: the first credit, quota or auth error from any model pauses the demo in the
+    // database, sends one provider_credit alert, and ends this call, so the caller does not sit
+    // with a silent agent and the next visitor sees the paused notice.
+    watchProviderErrors({ stt: sttModel, llm: llmModel, tts: ttsModel }, (cls, source) => {
+      logger.warn({ kind: cls.kind, detail: cls.detail, source }, 'provider credit, quota or auth error');
+      void autoPause(ops, alerter, cls, source, new Date(), logger).finally(() => session.shutdown({ drain: false, reason: 'provider_credit' }));
+    });
     tracing?.attach(session);
 
     // "Under the hood" snapshots for the browser demo: real state only, best effort delivery.

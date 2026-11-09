@@ -12,7 +12,9 @@
     "./seed": "./seed.ts",
     "./client": "./client.ts",
     "./read": "./read.ts",
-    "./usage": "./usage.ts"
+    "./usage": "./usage.ts",
+    "./ops": "./ops.ts",
+    "./alerts": "./alerts.ts"
   },
   "scripts": {
     "generate": "drizzle-kit generate && sed -i '' 's/\"public\"\\.//g' migrations/*.sql",

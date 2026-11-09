@@ -1,11 +1,13 @@
 import { createHmac } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { openDb } from 'db';
+import { Alerter, alertPortFromEnv, parseAlertsEnv } from 'db/alerts';
+import { DrizzleOps } from 'db/ops';
 import { clientIpFromForwardedFor, limitOn } from 'db/usage';
 import { AccessToken, RoomAgentDispatch, RoomConfiguration, type VideoGrant } from 'livekit-server-sdk';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { z } from 'zod';
-import { demoPaused } from '../../../lib/pause.ts';
+import { demoPaused, pausedNotice } from '../../../lib/pause.ts';
 
 // Browser token endpoint (PRD section 3.3). The client posts a TokenSourceRequest; only the four
 // whitelisted form attributes are copied onto the token, after validation. The grant gives no
@@ -56,31 +58,65 @@ function hashIp(ip: string, secret: string): string {
   return createHmac('sha256', secret).update(ip).digest('hex');
 }
 
-/** Checks today's caps and records this call. Returns a response when the request must stop. */
+const noStore = { 'Cache-Control': 'no-store' };
+
+function pausedResponse(notice: string): NextResponse {
+  return NextResponse.json({ error: 'paused', notice }, { status: 503, headers: noStore });
+}
+
+/** One Alerter per request; the dedupe uses the request's connection, the throttle is per process. */
+function alerterFor(ops: DrizzleOps | null): Alerter {
+  const cfg = parseAlertsEnv(process.env);
+  return new Alerter({ port: alertPortFromEnv(cfg), log: ops, cooldownMs: cfg.cooldownMs });
+}
+
+/**
+ * Database checks for one browser call, on one connection: the demo_state pause row, then today's
+ * caps (which also record the call). Returns a response when the request must stop. Without
+ * DATABASE_URL and without caps (local development) nothing is checked. Every failure fails
+ * closed with 503 and one fail_closed alert (deduped); a full global cap sends daily_limit.
+ */
 async function admitWebCall(req: Request, secret: string): Promise<NextResponse | null> {
   const parsed = limitsSchema.safeParse(process.env);
   if (!parsed.success) return new NextResponse('demo limit environment is invalid', { status: 500 });
   const { DEMO_LIMIT_PER_IP_PER_DAY: ipLimit, DEMO_LIMIT_GLOBAL_PER_DAY: globalLimit } = parsed.data;
-  if (!limitOn(ipLimit) && !limitOn(globalLimit)) return null;
+  const limitsOn = limitOn(ipLimit) || limitOn(globalLimit);
   const dbUrl = process.env.DATABASE_URL;
-  if (!dbUrl) return new NextResponse('database is not configured', { status: 500 });
-  const ip = clientIpFromForwardedFor(req.headers.get('x-forwarded-for'));
-  const { port, close } = openDb(dbUrl);
+  if (!dbUrl) return limitsOn ? new NextResponse('database is not configured', { status: 500 }) : null;
+  const { port, db, close } = openDb(dbUrl);
+  const ops = new DrizzleOps(db);
   try {
-    const result = await port.reserveDemoUsage({
-      channel: 'web',
-      now: new Date(),
-      ipHash: ip ? hashIp(ip, secret) : null,
-      ipLimit: ipLimit ?? null,
-      globalLimit: globalLimit ?? null,
-    });
-    if (!result.ok) return NextResponse.json({ error: 'daily_limit' }, { status: 429, headers: { 'Cache-Control': 'no-store' } });
+    let state;
+    try {
+      state = await ops.getDemoState();
+    } catch {
+      await alerterFor(ops).send('fail_closed', { detail: 'web pause check' });
+      return new NextResponse('pause check failed', { status: 503 });
+    }
+    if (state.paused) return pausedResponse(pausedNotice({ env: false, reason: state.reason }));
+    if (!limitsOn) return null;
+    const ip = clientIpFromForwardedFor(req.headers.get('x-forwarded-for'));
+    let result;
+    try {
+      result = await port.reserveDemoUsage({
+        channel: 'web',
+        now: new Date(),
+        ipHash: ip ? hashIp(ip, secret) : null,
+        ipLimit: ipLimit ?? null,
+        globalLimit: globalLimit ?? null,
+      });
+    } catch {
+      // Fail closed: without a working count the cap cannot hold.
+      await alerterFor(ops).send('fail_closed', { detail: 'web usage count' });
+      return new NextResponse('usage check failed', { status: 503 });
+    }
+    if (!result.ok) {
+      if (result.reason === 'global_limit') await alerterFor(ops).send('daily_limit', { detail: 'web token route' });
+      return NextResponse.json({ error: 'daily_limit' }, { status: 429, headers: noStore });
+    }
     return null;
-  } catch {
-    // Fail closed: without a working count the cap cannot hold.
-    return new NextResponse('usage check failed', { status: 503 });
   } finally {
-    await close();
+    await close().catch(() => {});
   }
 }
 
@@ -103,13 +139,14 @@ export async function POST(req: Request) {
   const origin = requestOrigin(req);
   if (!origin || !allowedOrigins().has(origin)) return new NextResponse('origin not allowed', { status: 403 });
   // DEMO_PAUSED: stop before minting a token or writing demo_usage, so a direct call cannot start a session.
+  // The demo_state row is checked in admitWebCall, before the caps.
   let paused: boolean;
   try {
     paused = demoPaused();
   } catch {
     return new NextResponse('DEMO_PAUSED is invalid', { status: 500 });
   }
-  if (paused) return NextResponse.json({ error: 'paused' }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
+  if (paused) return pausedResponse(pausedNotice({ env: true }));
   const url = process.env.LIVEKIT_URL;
   const apiKey = process.env.LIVEKIT_API_KEY;
   const apiSecret = process.env.LIVEKIT_API_SECRET;

@@ -16,11 +16,13 @@ interface AppProps {
   personaName: string;
   catalog: HomeCatalog | null;
   paused: boolean;
+  /** The fixed notice for the current pause reason (lib/pause.ts). */
+  pausedNotice: string;
 }
 
 type View = 'form' | 'call' | 'done';
 
-export function App({ agentName, phoneNumber, personaName, catalog, paused }: AppProps) {
+export function App({ agentName, phoneNumber, personaName, catalog, paused, pausedNotice }: AppProps) {
   const [view, setView] = useState<View>('form');
   const [form, setForm] = useState<FormValues>({ guardianName: '', phone: '', email: '', consent: false });
   const [error, setError] = useState<string | null>(null);
@@ -67,9 +69,10 @@ export function App({ agentName, phoneNumber, personaName, catalog, paused }: Ap
         setNotice("Today's demo limit is reached. Try again tomorrow.");
         return;
       }
-      // The token route answers 503 { error: 'paused' } while DEMO_PAUSED is on.
+      // The token route answers 503 { error: 'paused', notice } while the demo is paused (env or
+      // database). The notice is one of the route's fixed sentences.
       if (err instanceof Error && err.message.includes(' received 503 ') && err.message.includes('paused')) {
-        setNotice(PAUSED_NOTICE);
+        setNotice(/"notice":"([^"]{1,200})"/.exec(err.message)?.[1] ?? PAUSED_NOTICE);
         return;
       }
       setError(err instanceof Error ? err.message.replace(/^Error generating token from endpoint [^:]+: received \d+ \/ /, '') : 'Could not start the call');
@@ -80,7 +83,7 @@ export function App({ agentName, phoneNumber, personaName, catalog, paused }: Ap
 
   return (
     <SessionProvider session={session}>
-      {view === 'form' && <PreCallForm paused={paused} phoneNumber={phoneNumber} personaName={personaName} catalog={catalog} onStart={start} error={error} notice={notice} starting={starting} />}
+      {view === 'form' && <PreCallForm paused={paused} pausedNotice={pausedNotice} phoneNumber={phoneNumber} personaName={personaName} catalog={catalog} onStart={start} error={error} notice={notice} starting={starting} />}
       {view === 'call' && (
         <CallView
           personaName={personaName}

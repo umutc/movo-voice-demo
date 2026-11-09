@@ -1,8 +1,9 @@
 // Real adapter against TEST_DATABASE_URL (isolated schema). Tables are truncated and reseeded
 // before each test. Never runs as part of `pnpm test`.
-import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createDb, type Db } from '../client.ts';
 import { DrizzleDb } from '../index.ts';
+import { DrizzleOps } from '../ops.ts';
 import { runMigrations } from '../migrate.ts';
 import { seedDb, truncateAll } from '../seed.ts';
 import * as cases from './booking-semantics.ts';
@@ -50,4 +51,26 @@ describe('DrizzleDb demo usage caps', () => {
   it('a limit of 0 or no limit admits every call', () => usage.zeroOrMissingLimitIsOff(h));
   it('calls from the previous UTC day do not count', () => usage.yesterdayDoesNotCount(h));
   it('concurrent reservations stop exactly at the limit', () => usage.concurrentReservationsStopAtLimit(h));
+});
+
+describe('DrizzleOps pause row and alert dedupe', () => {
+  it('no row reads as not paused; pause and resume upsert the single row', async () => {
+    const ops = new DrizzleOps(db);
+    expect(await ops.getDemoState()).toEqual({ paused: false, reason: null, updatedAt: null });
+    const at = new Date('2026-11-09T12:00:00Z');
+    expect(await ops.setDemoState({ paused: true, reason: ' provider_credit: 429 ', now: at })).toEqual({ paused: true, reason: 'provider_credit: 429', updatedAt: at });
+    expect((await ops.setDemoState({ paused: false, reason: null, now: at })).paused).toBe(false);
+    expect((await ops.getDemoState()).reason).toBeNull();
+  });
+
+  it('claimAlert writes once per kind per cooldown, also under concurrency', async () => {
+    const ops = new DrizzleOps(db);
+    const now = new Date('2026-11-09T12:00:00Z');
+    const hour = 3_600_000;
+    const claims = await Promise.all(Array.from({ length: 6 }, () => ops.claimAlert({ kind: 'fail_closed', detail: 'test', now, cooldownMs: 6 * hour })));
+    expect(claims.filter(Boolean)).toHaveLength(1);
+    expect(await ops.claimAlert({ kind: 'daily_limit', detail: null, now, cooldownMs: 6 * hour })).toBe(true);
+    expect(await ops.claimAlert({ kind: 'fail_closed', detail: null, now: new Date(now.getTime() + 5 * hour), cooldownMs: 6 * hour })).toBe(false);
+    expect(await ops.claimAlert({ kind: 'fail_closed', detail: null, now: new Date(now.getTime() + 6 * hour + 1), cooldownMs: 6 * hour })).toBe(true);
+  });
 });

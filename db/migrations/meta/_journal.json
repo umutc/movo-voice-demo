@@ -15,6 +15,13 @@
       "when": 1794058251347,
       "tag": "0001_uneven_lake",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794220735832,
+      "tag": "0002_faulty_network",
+      "breakpoints": true
     }
   ]
 }

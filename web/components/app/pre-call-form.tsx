@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { formatPhone } from '@/lib/call-format';
-import { PAUSED_NOTICE } from '@/lib/pause';
 import type { HomeCatalog } from 'db/read';
 import { HomeSections } from './home-sections';
 import { MicIcon, SiteHeader } from './site-header';
@@ -10,6 +9,7 @@ import type { FormValues } from './types';
 
 interface Props {
   paused: boolean;
+  pausedNotice: string;
   phoneNumber: string | null;
   personaName: string;
   catalog: HomeCatalog | null;
@@ -19,7 +19,7 @@ interface Props {
   starting: boolean;
 }
 
-export function PreCallForm({ paused, phoneNumber, personaName, catalog, onStart, error, notice, starting }: Props) {
+export function PreCallForm({ paused, pausedNotice, phoneNumber, personaName, catalog, onStart, error, notice, starting }: Props) {
   const [values, setValues] = useState<FormValues>({ guardianName: '', phone: '', email: '', consent: false });
   const canStart = values.guardianName.trim().length >= 2 && values.consent && !starting && !paused;
 
@@ -135,7 +135,7 @@ export function PreCallForm({ paused, phoneNumber, personaName, catalog, onStart
             )}
             {paused && (
               <p role="status" className="m-0 flex items-center gap-2 text-[13px] text-text-secondary">
-                <span className="dot dot-warning" /> {PAUSED_NOTICE}
+                <span className="dot dot-warning" /> {pausedNotice}
               </p>
             )}
             {notice && !paused && (

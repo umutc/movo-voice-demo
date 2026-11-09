@@ -4,7 +4,7 @@
 //   pnpm db:seed -- --test  -> TEST_DATABASE_URL (schema test)
 import { eq, sql } from 'drizzle-orm';
 import { createDb, type Db } from './client.ts';
-import { bookings, callbackRequests, calls, children, demoUsage, families, guardians, programs, trialSlots } from './schema.ts';
+import { alerts, bookings, callbackRequests, calls, children, demoState, demoUsage, families, guardians, programs, trialSlots } from './schema.ts';
 import { DEMO_FAMILY, PROGRAMS, generateSlots } from './seed-data.ts';
 
 export const FALLBACK_DEMO_PHONE = '+15555550100';
@@ -65,7 +65,7 @@ export async function seedDb(db: Db, opts: { now?: Date; demoPhone?: string } = 
 
 /** Test helper: empties every table in the connected schema. */
 export async function truncateAll(db: Db): Promise<void> {
-  await db.execute(sql`truncate table ${bookings}, ${callbackRequests}, ${calls}, ${demoUsage}, ${children}, ${guardians}, ${families}, ${trialSlots}, ${programs} restart identity cascade`);
+  await db.execute(sql`truncate table ${bookings}, ${callbackRequests}, ${calls}, ${demoUsage}, ${alerts}, ${demoState}, ${children}, ${guardians}, ${families}, ${trialSlots}, ${programs} restart identity cascade`);
 }
 
 async function main(): Promise<void> {

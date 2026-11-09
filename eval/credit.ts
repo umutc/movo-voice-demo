@@ -2,38 +2,15 @@
 // MaxGatewayCredits) is not an agent failure: the run stops, exits nonzero, and writes an aborted
 // marker instead of a scorecard. The SDK retries a 429 and then throws a generic "failed after N
 // attempts" error, so the guard also listens to each LLM's "error" event, which carries the
-// original status error.
+// original status error. The classification lives in agent/src/provider-errors.ts (shared with the
+// agent's automatic pause).
 import { writeFileSync } from 'node:fs';
 import type { llm } from '@livekit/agents';
-
-const QUOTA_TEXT = /MaxGatewayCredits|insufficient[_ ]?(credit|quota)|quota|credit(s)? (exhausted|exceeded)|rate.?limit|\b429\b/i;
-
-function textOf(v: unknown): string {
-  if (v === null || v === undefined) return '';
-  if (typeof v === 'string') return v;
-  try {
-    return JSON.stringify(v);
-  } catch {
-    return String(v);
-  }
-}
+import { creditDetail as detail, isCreditError as isProviderCreditError } from 'agent/src/provider-errors.ts';
 
 /** True for a 429 or a quota / credit error, also when it is wrapped in `cause` or `error`. */
-export function isCreditError(err: unknown, depth = 0): boolean {
-  if (!err || typeof err !== 'object' || depth > 4) return typeof err === 'string' && QUOTA_TEXT.test(err);
-  if (err instanceof InferenceCreditExhausted) return true;
-  const e = err as { statusCode?: unknown; status?: unknown; message?: unknown; body?: unknown; cause?: unknown; error?: unknown };
-  if (e.statusCode === 429 || e.status === 429) return true;
-  if (QUOTA_TEXT.test(`${textOf(e.message)} ${textOf(e.body)}`)) return true;
-  return isCreditError(e.cause, depth + 1) || isCreditError(e.error, depth + 1);
-}
-
-function detail(err: unknown): string {
-  const e = (err ?? {}) as { statusCode?: unknown; message?: unknown; body?: unknown };
-  const all = `${textOf(e.message)} ${textOf(e.body)}`;
-  if (/MaxGatewayCredits/i.test(all)) return '429 MaxGatewayCredits';
-  if (e.statusCode === 429) return '429';
-  return 'quota error';
+export function isCreditError(err: unknown): boolean {
+  return err instanceof InferenceCreditExhausted || isProviderCreditError(err);
 }
 
 export class InferenceCreditExhausted extends Error {

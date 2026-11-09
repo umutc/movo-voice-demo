@@ -1,6 +1,7 @@
 // Drizzle schema per PRD section 8. No pgEnum: enum types are schema-qualified in generated SQL
 // and would break the isolated `test` schema. Enumerated columns are text, typed in db/port.ts.
-import { boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { boolean, check, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const families = pgTable(
   'families',
@@ -133,4 +134,32 @@ export const demoUsage = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('demo_usage_created_idx').on(t.createdAt), index('demo_usage_ip_created_idx').on(t.ipHash, t.createdAt)],
+).enableRLS();
+
+// One row per alert email sent (db/alerts.ts). The cooldown check reads the newest row of a kind,
+// so the same kind sends at most one email per ALERTS_COOLDOWN_HOURS. `detail` is a short fixed
+// label (for example "429 MaxGatewayCredits, llm"), never a secret, phone, email or transcript.
+export const alerts = pgTable(
+  'alerts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    kind: text('kind').notNull(),
+    detail: text('detail'),
+    sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('alerts_kind_sent_idx').on(t.kind, t.sentAt)],
+).enableRLS();
+
+// Single-row pause switch (id is always 1). The demo is paused when DEMO_PAUSED is true OR this
+// row says paused. The agent sets it on a provider credit, quota or auth error; the
+// demo:pause / demo:resume scripts set it by hand. No row means not paused.
+export const demoState = pgTable(
+  'demo_state',
+  {
+    id: integer('id').primaryKey(),
+    paused: boolean('paused').notNull().default(false),
+    reason: text('reason'),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check('demo_state_single_row', sql`${t.id} = 1`)],
 ).enableRLS();
