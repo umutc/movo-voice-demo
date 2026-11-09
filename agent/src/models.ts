@@ -52,7 +52,10 @@ export function makeLlm(id: string, provider: ModelProvider, openaiApiKey?: stri
     // unless reasoning is off ("Function tools with reasoning_effort are not supported"). The
     // plugin's own default list stops at gpt-5.6, so it sends nothing and the server default
     // applies. LiveKit Inference sets this for us; direct calls must set it explicitly.
-    return new openai.LLM({ model: openaiModelId(id), reasoningEffort: 'none', ...(openaiApiKey ? { apiKey: openaiApiKey } : {}) });
+    // parallelToolCalls false: the plugin defaults to true, and two propose_booking calls in one
+    // turn made the agent read one booking back while the other proposal was current. A voice
+    // agent proposes one booking per turn.
+    return new openai.LLM({ model: openaiModelId(id), reasoningEffort: 'none', parallelToolCalls: false, ...(openaiApiKey ? { apiKey: openaiApiKey } : {}) });
   }
   return new inference.LLM({ model: id as inference.LLMModels });
 }
