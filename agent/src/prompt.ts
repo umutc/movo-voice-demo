@@ -95,8 +95,9 @@ export function buildSystemPrompt(input: PromptInput): string {
   sections.push(
     `Voice style. This is a phone-style voice conversation. Keep every reply to at most two short sentences. ` +
       `Ask at most one question per reply. Never use lists, bullet points, markdown, emoji, or headings. ` +
+      `No exclamation marks, even in greetings and goodbyes. ` +
       `Say numbers, prices, dates, and times in words the way a person would say them aloud, for example "nine thirty in the morning" and "ninety five dollars a month". ` +
-      `Do not spell out ids or codes. Speak in a warm, plain, unhurried way.`,
+      `Speak in a warm, plain, unhurried way.`,
   );
 
   sections.push(
@@ -121,8 +122,7 @@ export function buildSystemPrompt(input: PromptInput): string {
         `Use lookup_programs with the age and offer at most two programs briefly. ` +
         `Use check_trial_slots for the chosen program and offer two slots. ` +
         `When the caller picks a slot, call propose_booking and say its read-back text word for word, then wait for the answer. ` +
-        `Only after the caller clearly agrees, call book_trial_class with the same details. If anything changes, propose again. ` +
-        `Close politely, then call end_call.`,
+        `Only after the caller clearly agrees, call book_trial_class with the same details. If anything changes, propose again.`,
     );
   } else {
     sections.push(
@@ -130,7 +130,7 @@ export function buildSystemPrompt(input: PromptInput): string {
         `confirm it is a good time, and mention the earlier conversation briefly. ` +
         `Offer two trial slots for the program discussed earlier, then follow the same read-back and booking steps: ` +
         `propose_booking, say the read-back word for word, wait for a clear yes, then book_trial_class. ` +
-        `If it is not a good time, offer a callback and close. Close politely, then call end_call.`,
+        `If it is not a good time, offer a callback and close.`,
     );
   }
 
@@ -165,7 +165,7 @@ export function buildSystemPrompt(input: PromptInput): string {
       `Do not say tool names, ids, or codes aloud.`,
   );
 
-  sections.push(`Closing. When the caller is done, thank them, say goodbye in one sentence, and call end_call.`);
+  sections.push(`Closing. When the caller is done, thank them, say goodbye in one calm sentence, and call end_call.`);
 
   return sections.join('\n\n');
 }

@@ -221,6 +221,7 @@ export function scoreStyle(r: HarnessResult): StyleResult {
   const joined = texts.join('\n');
   if (/[*#]/.test(joined) || /^\s*[-•]\s/m.test(joined) || /^\s*\d+[.)]\s/m.test(joined)) problems.push('markdown (asterisk, hash, bullet or numbered list)');
   if (/\$/.test(joined)) problems.push('dollar sign');
+  if (/!/.test(joined)) problems.push('exclamation mark');
   if (/\d\s?(?:a\.?m\.?|p\.?m\.?)(?!\w)/i.test(joined) || /\d{1,2}:\d{2}/.test(joined)) problems.push('digit time (use words)');
   if (/\d\s*dollars?\b/i.test(joined)) problems.push('digit price (use words)');
   return { pass: problems.length === 0, avgWords, problems };

@@ -62,7 +62,8 @@
   identity: sip-new
   persona: >
     You are Dana Whitfield, a parent. Your son Theo is six. You want a free trial class and you are flexible on the day.
-    After you hear a read-back of the first slot, you change your mind and ask for the second slot instead.
+    Accept the first program offered. When the assistant offers trial slots, pick the first slot it offered, by its day and time.
+    After you hear a read-back of that first slot, you change your mind and ask for the second slot instead.
   goal: End up with exactly one booking for Theo in the second slot the assistant offered, confirmed only after a fresh read-back of that new slot.
   maxTurns: 12
   forbiddenTools: []

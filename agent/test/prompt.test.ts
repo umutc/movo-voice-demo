@@ -80,6 +80,16 @@ describe('system prompt', () => {
     expect(text).toMatch(/end_call/);
     expect(text).toMatch(/New York/);
     expect(text).not.toMatch(/—/);
+    expect(text).toMatch(/No exclamation marks, even in greetings and goodbyes/);
+    expect(text).toMatch(/say goodbye in one calm sentence/);
+  });
+
+  it('contains no exclamation mark itself, so it never models one', () => {
+    const variants = [
+      buildSystemPrompt({ ...base, variant: 'inbound', features: { sms: true, guardian: true }, caller: { channel: 'phone', knownPhone: '+17185550123' } }),
+      buildSystemPrompt({ ...base, variant: 'follow_up', features: { sms: true, guardian: true }, caller: { channel: 'browser', knownPhone: null } }),
+    ];
+    for (const text of variants) expect(text).not.toMatch(/!/);
   });
 
   it('omits consent text unless a stretch feature is on, and memory unless present', () => {
